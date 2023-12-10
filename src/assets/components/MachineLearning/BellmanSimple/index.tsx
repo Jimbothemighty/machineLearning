@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import styles from "./BellmanSimple.module.css"
 import Button from "~/assets/components/Controls/Button"
 
-const gridSize = 5
+const gridSize = 6
 const numActions = 4 // 0: Up, 1: Right, 2: Down, 3: Left
 
 // Initialize the Q-values to zeros
@@ -10,15 +10,16 @@ let qValues = Array.from({ length: gridSize }, () => Array(gridSize).fill(Array(
 
 // Set obstacles, win state, and lose state
 const obstacles = [{ row: 0, col: 0 }, { row: 1, col: 1 }, { row: 3, col: 3 }]
-const winState = { row: 0, col: gridSize - 1 }
+const winState = { row: 3, col: 4 }
 const loseState = { row: gridSize - 1, col: gridSize - 1 }
 const aiStartPosition = { row: gridSize - 1, col: 0 } // AI starts at the bottom-left corner
 
 // Learning parameters
 const alpha = 0.1 // learning rate
 const discountFactor = 0.9 // discount factor
-const numEpisodes = 10 // number of training episodes // default was 1000!
-const maxIterations = 10
+const numEpisodes = 1000 // number of training episodes // default was 1000!
+const episodesBatchSize = 100
+const maxIterations = 1000
 
 // Bellman equation function
 function bellmanEquation(currentState, action, nextState, reward, discountFactor, qValues) {
@@ -30,12 +31,30 @@ function bellmanEquation(currentState, action, nextState, reward, discountFactor
 	qValues[currentState.row][currentState.col][action] = updatedQValue
 }
 
+type coordsType = {
+	col: number,
+	row: number
+}
+
+type pathType = {
+	path: Array<coordsType>
+	complete: boolean
+}
+
 // Get preferred path function
-function getPreferredPath() {
-	let path = [{ row: gridSize - 1, col: 0 }] // Start at the bottom-left corner
+function getPreferredPath() : pathType {
+	let path = [aiStartPosition]
 
 	while (!(path[path.length - 1].row === winState.row && path[path.length - 1].col === winState.col)) {
 		let currentState = path[path.length - 1]
+
+		if (currentState.row > gridSize - 1 || currentState.row < 0 || currentState.col > gridSize - 1 || currentState.col < 0) {
+			return {
+				path,
+				complete: false,
+			}
+		}
+
 		let action = qValues[currentState.row][currentState.col].indexOf(Math.max(...qValues[currentState.row][currentState.col]))
 
 		let nextState = { row: currentState.row, col: currentState.col }
@@ -50,7 +69,10 @@ function getPreferredPath() {
 		path.push(nextState)
 	}
 
-	return path
+	return {
+		path,
+		complete: true,
+	}
 }
 
 // Q-learning function
@@ -69,10 +91,10 @@ function qLearning() {
 
 		let nextState = { row: currentState.row, col: currentState.col }
 		switch (action) {
-		case 0: nextState.row--; break // Up
-		case 1: nextState.col++; break // Right
-		case 2: nextState.row++; break // Down
-		case 3: nextState.col--; break // Left
+		case 0: nextState.row = Math.max(0, nextState.row - 1); break // Up
+		case 1: nextState.col = Math.min(gridSize - 1, nextState.col + 1); break // Right
+		case 2: nextState.row = Math.min(gridSize - 1, nextState.row + 1); break // Down
+		case 3: nextState.col = Math.max(0, nextState.col - 1); break // Left
 		default: throw new Error(`Unexpected default`)
 		}
 
@@ -108,7 +130,7 @@ function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-function qLearningBatch(currentEpisode, batchSize : number = 1) : number {
+function qLearningBatch(currentEpisode, batchSize : number = episodesBatchSize) : number {
 	let modifierForThisLoop = currentEpisode
 	for (let episode = currentEpisode; episode < numEpisodes && episode < modifierForThisLoop + batchSize; episode++) {
 		qLearning()
@@ -122,6 +144,7 @@ export function BellmanSimple() {
 	const [isLearning, setIsLearning] = useState(false)
 	const [isStarted, setIsStarted] = useState(false)
 	const [preferredPath, setPreferredPath] = useState(null)
+	const [isCompletePath, setIsCompletePath] = useState(false)
 	const [episode, setEpisode] = useState(0)
 
 	useEffect(() => {
@@ -132,10 +155,11 @@ export function BellmanSimple() {
 		const currentEpisode = qLearningBatch(episode)
 		setEpisode(currentEpisode)
 
-		const currentPreferredPath = getPreferredPath()
-		console.log(`Preferred Path:`, currentPreferredPath)
-		setPreferredPath(currentPreferredPath)
+		const { path, complete } = getPreferredPath()
+		console.log(`Preferred Path:`, path)
+		setPreferredPath(path)
 		setIsLearning(false)
+		setIsCompletePath(complete)
 	}, [isLearning])
 
 	// console.log(`isStarted ${isStarted.toString()}`)
@@ -162,7 +186,7 @@ export function BellmanSimple() {
 					<div>
 						<h3>Training Info</h3>
 						<p>Episodes Complete: {episode}</p>
-						<p>Did find path: TODO</p>
+						<p>Did find path: {!isCompletePath ? `No` : `Yes`}</p>
 					</div>
 				</div>
 			</div>
