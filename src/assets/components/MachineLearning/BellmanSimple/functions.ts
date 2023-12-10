@@ -1,8 +1,8 @@
 import { aiStartPosition, alpha, discountFactor, episodesBatchSize, gridSize, loseState, numActions, numEpisodes, obstacles, winState } from "~/assets/components/MachineLearning/BellmanSimple/fixtures"
 
 // Bellman equation function
-export function bellmanEquation(currentState, action : number, nextState, reward : number, discountFactor : number, qValues, gridSize : number, alpha : number) {
-	let currentQValue = qValues[currentState.row][currentState.col][action]
+export function bellmanEquation(currentState, action : number, nextState, reward : number, qValues) {
+	let currentQValue : number = qValues[currentState.row][currentState.col][action]
 
 	let maxNextQValue
 	if (nextState.row > gridSize - 1 || nextState.row < 0 || nextState.col > gridSize - 1 || nextState.col < 0) {
@@ -12,11 +12,16 @@ export function bellmanEquation(currentState, action : number, nextState, reward
 		maxNextQValue = Math.max(...qValues[nextState.row][nextState.col])
 	}
 
-	let updatedQValue = currentQValue + alpha * (reward + discountFactor * maxNextQValue - currentQValue)
-	// let updatedQValue = currentQValue + (maxNextQValue - currentQValue)
-	qValues[currentState.row][currentState.col][action] = updatedQValue
+	let updatedQValue : number = currentQValue + alpha * (reward + discountFactor * maxNextQValue - currentQValue)
 
-	return qValues
+	if (currentState.row === 1 && currentState.col === 0) {
+		debugger
+	}
+	if (currentState.row === 0 && currentState.col === 0) {
+		debugger
+	}
+
+	qValues[currentState.row][currentState.col][action] = updatedQValue
 }
 
 export function qLearningBatch(currentEpisode, qValues) : number {
@@ -40,7 +45,7 @@ export function qLearning(qValues) {
 		// console.log(`learning while loop iteration ${iterations}`)
 		let action
 
-		if (Math.random() < 0.15) {
+		if (Math.random() < 0.2) {
 			action = Math.floor(Math.random() * numActions)
 			numRandomActionsTaken++
 		} else {
@@ -59,7 +64,7 @@ export function qLearning(qValues) {
 
 		if (nextState.row >= 0 && nextState.row < gridSize && nextState.col >= 0 && nextState.col < gridSize) {
 			if (obstacles.some(obstacle => obstacle.row === nextState.row && obstacle.col === nextState.col)) {
-				// console.log(`found an obstacle`)
+				console.log(`found an obstacle`)
 				// let reward = -0.5
 				// bellmanEquation(currentState, action, nextState, reward, discountFactor, qValues)
 
@@ -73,7 +78,7 @@ export function qLearning(qValues) {
 
 				// state is unchanged!
 			} else {
-				let reward = 0
+				let reward = 0.4
 
 				if (nextState.row === winState.row && nextState.col === winState.col) {
 					reward = 1
@@ -83,7 +88,7 @@ export function qLearning(qValues) {
 					isTerminal = true
 				}
 
-				qValues = bellmanEquation(currentState, action, nextState, reward, discountFactor, qValues, gridSize, alpha)
+				bellmanEquation(currentState, action, nextState, reward, qValues)
 
 				currentState = nextState
 

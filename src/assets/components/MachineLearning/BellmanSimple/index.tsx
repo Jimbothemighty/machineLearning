@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { MutableRefObject, useEffect, useRef, useState } from "react"
 import styles from "./BellmanSimple.module.css"
 import Button from "~/assets/components/Controls/Button"
 import { gridSize, numActions } from "~/assets/components/MachineLearning/BellmanSimple/fixtures"
@@ -11,7 +11,7 @@ export function BellmanSimple() {
 	const [preferredPath, setPreferredPath] = useState(null)
 	const [isCompletePath, setIsCompletePath] = useState(false)
 	const [episode, setEpisode] = useState(0)
-	const qValues = useRef(Array.from({ length: gridSize }, () => Array(gridSize).fill(Array(numActions).fill(0))))
+	const qValues : MutableRefObject<Array<Array<Array<number>>>> = useRef(Array.from({ length: gridSize }, () => Array(gridSize).fill(Array(numActions).fill(0))))
 
 	useEffect(() => {
 		if (!isLearning) {
@@ -30,8 +30,7 @@ export function BellmanSimple() {
 		setIsCompletePath(complete)
 
 		if (complete) {
-			console.log(`qValues`)
-			console.log(qValues)
+			console.log(`qValues:`, qValues.current)
 		}
 	}, [isLearning])
 
