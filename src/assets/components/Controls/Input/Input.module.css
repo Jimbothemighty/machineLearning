@@ -1,0 +1,49 @@
+Input.module.css
+.inputContainer {
+	margin-bottom: 16px;
+}
+
+.inputContainer .label {
+	display: block;
+	margin-bottom: 8px;
+}
+
+.inputContainer .input:not([type='checkbox']) {
+	width: 100%;
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	outline: none;
+}
+
+.inputContainer input[type='checkbox'] {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--theme-bg-colour);
+	border-radius: 4px;
+	margin-right: 8px;
+	cursor: pointer;
+	outline: none;
+	position: relative;
+	transition: background-color 0.3s, border-color 0.3s;
+}
+  
+.inputContainer input[type='checkbox']:checked {
+	background-color: var(--theme-bg-colour);
+	border-color: var(--theme-bg-colour);
+}
+  
+.inputContainer input[type='checkbox']:checked::before {
+	content: '\2713';
+	display: block;
+	text-align: center;
+	font-size: 1.5em;
+	color: #fff;
+	position: absolute;
+	top: 40%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}

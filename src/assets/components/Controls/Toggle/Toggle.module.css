@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+
+.toggleContainer {
+	/**/
+}
+
+.toggleContainer .checkbox {
+	opacity: 0;
+	position: absolute;
+}
+
+.toggleContainer .checkboxLabel {
+	background-color: #111;
+	width: 50px;
+	height: 25px;
+	border-radius: 50px;
+	position: relative;
+	padding: 5px;
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+.toggleContainer .checkboxLabel .ball {
+	background-color: #fff;
+	width: 20px;
+	height: 20px;
+	position: absolute;
+	left: 3px;
+	top: 3px;
+	border-radius: 50%;
+	transition: transform 0.2s linear;
+}
+
+.toggleContainer .checkbox:checked+.checkboxLabel .ball {
+	transform: translateX(25px);
+}
+
+.toggleContainer .emoji {
+	font-family: 'Noto Color Emoji', sans-serif;
+	display: block;
+	font-size: 0.9em;
+	position: relative;
+	top: 0px
+}
+
+.toggleContainer .emoji.right {
+	right: -2px;
+}
+
+.toggleContainer .emoji.left {
+	right: 2px;
+}

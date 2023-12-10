@@ -1,0 +1,113 @@
+@font-face {
+	font-family: "Roboto";
+	src: url(/src/assets/fonts/Roboto/Roboto-Light.ttf);
+}
+
+body {
+	padding: 0;
+	margin: 0;
+	font-family: Roboto, Helvetica, sans-serif;
+}
+
+button {
+	border: none;
+	padding: 5px 20px;
+	background-color: var(--theme-bg-colour);
+	color: var(--theme-txt-colour);
+}
+
+input {
+	font-family: Roboto, Helvetica, sans-serif;
+	padding: 5px;
+	border: none;
+	border-radius: 5px;
+}
+
+.LogInForm form {
+	padding: 10px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+/* .LogInForm form h1, .LogInForm form input, .LogInForm form button {
+	display: flex;
+} */
+
+.NavBar {
+	padding: 10px;
+	width: 100%;
+	background-color: var(--theme-bg-colour);
+	color: var(--theme-txt-colour);
+	box-sizing: border-box;
+	margin: 0;
+}
+
+.NavBar .logInButtonContainer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.NavBar .logInButtonContainer button {
+	border: 1px solid var(--theme-txt-colour);
+}
+
+.LoggedInApp {
+	padding: 10px;
+}
+
+
+.LoggedInApp button {
+	width: 100%;
+}
+
+.Footer {
+	display: flex;
+	justify-content: flex-start;
+	width: 100%;
+	background-color: var(--theme-bg-colour);
+	color: var(--theme-txt-colour);
+}
+
+.FooterColumn {
+	display: flex;
+	flex-direction: column;
+	padding: 10px;
+	flex-basis: 33%;
+}
+
+
+html.light {
+	transition: background-color 200ms linear;
+	transition: color 200ms linear;
+}
+
+html.dark {
+	background-color: #333;
+	color: white;
+}
+
+html.dark {
+	background-color: #333;
+	color: white;
+	transition: background-color 200ms linear;
+	transition: color 200ms linear;
+}
+
+html.dark input, 
+html.dark textarea, 
+html.dark select {
+	background-color: #222;
+	color: white;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+	color: var(--heading-color-dark);
+}

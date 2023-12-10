@@ -1,0 +1,38 @@
+.bellmanGridRow {
+	display: flex;
+}
+
+.bellmanGridCol {
+	padding: 10px;
+	border: 1px solid white;
+	width: 30px;
+	height: 30px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.bellmanGridCol.obstacle {
+	background-color: grey;
+	color: black;
+}
+
+.bellmanGridCol.win {
+	background-color: #27ae60;
+	color: white;
+}
+
+.bellmanGridCol.lose {
+	background-color: #c0392b;
+	color: white;
+}
+
+.bellmanGridCol.aiLocation {
+	background-color: #f1c40f;
+	color: black;
+}
+
+.flexGap {
+	display: flex;
+	gap: 10px
+}

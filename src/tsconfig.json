@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "jsx": "react-jsx",
+        "moduleResolution": "node",
+        "checkJs": true,
+		"lib": ["DOM", "ES2022"],
+        "strictNullChecks": false,
+        "strictFunctionTypes": false,
+        "baseUrl": ".",
+        "paths": {
+            "~/*": ["./*"]
+        }
+    },
+    "exclude": [
+        "node_modules",
+        "**/node_modules/*"
+    ],
+}

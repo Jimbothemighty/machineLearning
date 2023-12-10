@@ -1,0 +1,30 @@
+/* ContextMenu.module.css */
+.contextMenu {
+	position: absolute;
+	background-color: #fff;
+	border: 1px solid #ccc;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	z-index: 1000;
+}
+
+ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+li {
+	padding: 8px 12px;
+	cursor: pointer;
+	&:hover {
+		background-color: var(--theme-bg-colour);
+	}
+}
+
+/** global to avoid transform on dark mode class */
+:global .dark {
+	.contextMenu {
+		background-color: #333;
+		color: white;
+	}
+}

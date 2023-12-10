@@ -1,0 +1,57 @@
+/* Dropdown.module.css */
+.dropdown {
+	position: relative;
+	display: inline-block;
+	width: 100%;
+}
+
+.selectedOption {
+	padding: 8px;
+	border: 1px solid #ccc;
+	cursor: pointer;
+}
+
+.dropdownContent {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	border: 1px solid #ccc;
+	background-color: #fff;
+	z-index: 1;
+}
+
+.searchInput {
+	width: 100%;
+	padding: 8px;
+	border: none;
+	border-bottom: 1px solid #ccc;
+	outline: none;
+}
+
+.dropdown input {
+	border-radius: 0px;
+}
+
+ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+li {
+	padding: 8px;
+	cursor: pointer;
+	&:hover {
+		background-color: var(--theme-bg-colour);
+	}
+}
+
+
+
+:global .dark {
+	.dropdownContent {
+	  background-color: #333;
+	  color: white;
+  }
+}

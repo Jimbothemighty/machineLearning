@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <script>
+            let theme = window.localStorage.getItem(`theme`) || `light`;
+            document.documentElement.classList.add(theme);
+        </script>
+        <style>
+            html.dark {
+                background-color: #333;
+                color: white;
+            }
+        </style>
+        <style id="theme">
+            * {
+                --theme-bg-colour: #2980B9;
+                --theme-txt-colour: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrapper"></div>
+        <script type="module" src="/src/index.tsx"></script>
+    </body>
+</html>

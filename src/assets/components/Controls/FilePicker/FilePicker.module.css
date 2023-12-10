@@ -1,0 +1,52 @@
+.filePicker {
+	position: relative;
+	display: flex;
+	font-family: 'Arial', sans-serif;
+  }
+  
+  .fileInput {
+	position: absolute;
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	z-index: -1;
+  }
+  
+  .fileInputLabel {
+	display: inline-block;
+	padding: 10px;
+	background-color: var(--theme-bg-colour);
+	color: #fff;
+	border-radius: 4px;
+	cursor: pointer;
+  }
+  
+  .clearButton {
+	margin-left: 10px;
+	background-color: #e74c3c;
+	color: #fff;
+	border: none;
+	padding: 5px 10px;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+  }
+  
+  .clearButton:hover {
+	background-color: #c0392b;
+  }
+  
+  .thumbnailContainer {
+	display: inline-block;
+	margin-left: 10px;
+  }
+  
+  .thumbnailImage {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center;
+  }

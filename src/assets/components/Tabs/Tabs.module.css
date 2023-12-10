@@ -1,0 +1,30 @@
+.tabsContainer {
+	width: 100%;
+}
+  
+  .tabs {
+	display: flex;
+  }
+  
+  .tab {
+	padding: 10px;
+	cursor: pointer;
+	border-bottom: none;
+	background-color: var(--theme-bg-colour);
+	color: var(--theme-txt-colour);
+	transition: background-color 0.3s;
+  }
+  
+  .tab:hover {
+	opacity: 0.7;
+  }
+  
+  .active {
+	
+	opacity: 0.7;
+  }
+  
+  .tabContent {
+	border: 1px solid #ccc;
+	padding: 10px;
+  }
