@@ -1,29 +1,34 @@
-import { coordsType } from "~/assets/components/MachineLearning/Bellman/functions"
+import { useEffect, useRef, useState } from "react"
+import { aiStartPosition, gridSize, obstacles, winState } from "~/assets/components/MachineLearning/Bellman/fixtures"
+import { coordsType, pathType, sleep } from "~/assets/components/MachineLearning/Bellman/functions"
+import { GridUi } from "~/assets/components/MachineLearning/components/GridUi"
 
-export function NeuralNet() {
-	return <div>Neural Network</div>
-}
+const inputSize = 2
+const hiddenSize = 3
+const outputSize = 1
 
-// Simple matrix class for basic operations
+const trainingEpochs = 10000
+const learningRate = 0.1
+
 class Matrix {
-	rows : number
-	cols : number
-	data : Array<Array<number>>
+	rows: number
+	cols: number
+	data: number[][]
 
-	constructor(rows, cols) {
+	constructor(rows: number, cols: number) {
 		this.rows = rows
 		this.cols = cols
-		this.data = Array.from({ length: rows }, () => Array(cols).fill(0))
+		this.data = JSON.parse(JSON.stringify(Array.from({ length: rows }, () => Array(cols).fill(0))))
 	}
 
-	randomize() {
+	randomize(): this {
 		this.data = this.data.map(row =>
-			row.map(() => Math.random() * 2 - 1) // Random values between -1 and 1
+			row.map(() => Math.random() * 2 - 1)
 		)
 		return this
 	}
 
-	dot(matrix) {
+	dot(matrix: Matrix): Matrix {
 		if (this.cols !== matrix.rows) {
 			throw new Error(`Incompatible matrix sizes for dot product`)
 		}
@@ -33,15 +38,23 @@ class Matrix {
 		})
 	}
 
-	transpose() {
+	transpose(): Matrix {
 		return new Matrix(this.cols, this.rows).map((_, i, j) => this.data[j][i])
 	}
 
-	multiply(value) {
+	multiply(value: number): Matrix {
 		return new Matrix(this.rows, this.cols).map((el, i, j) => this.data[i][j] * value)
 	}
 
-	add(matrix) {
+	multiplyMatrix(matrix: Matrix): Matrix {
+		if (this.rows !== matrix.rows || this.cols !== matrix.cols) {
+			throw new Error(`Incompatible matrix sizes for multiplication`)
+		}
+
+		return new Matrix(this.rows, this.cols).map((_, i, j) => this.data[i][j] * matrix.data[i][j])
+	}
+
+	add(matrix: Matrix): Matrix {
 		if (this.rows !== matrix.rows || this.cols !== matrix.cols) {
 			throw new Error(`Incompatible matrix sizes for addition`)
 		}
@@ -49,84 +62,82 @@ class Matrix {
 		return new Matrix(this.rows, this.cols).map((el, i, j) => this.data[i][j] + matrix.data[i][j])
 	}
 
-	map(callback) {
+	subtract(matrix: Matrix): Matrix {
+		if (this.rows !== matrix.rows || this.cols !== matrix.cols) {
+			throw new Error(`Incompatible matrix sizes for subtraction`)
+		}
+
+		return new Matrix(this.rows, this.cols).map((el, i, j) => this.data[i][j] - matrix.data[i][j])
+	}
+
+	map(callback: (value: number, i: number, j: number) => number): Matrix {
 		return new Matrix(this.rows, this.cols).setData(
 			this.data.map((row, i) => row.map((el, j) => callback(el, i, j)))
 		)
 	}
 
-	setData(data) {
+	setData(data: number[][]): this {
 		this.data = data
 		return this
 	}
 }
 
-// Define the neural network class
 class NeuralNetwork {
 	inputSize: number
 	hiddenSize: number
 	outputSize: number
-
 	weightsInputHidden: Matrix
 	biasHidden: Matrix
 	weightsHiddenOutput: Matrix
 	biasOutput: Matrix
+	hiddenLayerOutput: Matrix
+	output: Matrix
 
-	hiddenLayerOutput: number
-	output: number
-
-	constructor(inputSize, hiddenSize, outputSize) {
+	constructor(inputSize: number, hiddenSize: number, outputSize: number) {
 		this.inputSize = inputSize
 		this.hiddenSize = hiddenSize
 		this.outputSize = outputSize
 
-		// Initialize weights and biases with random values
-		this.weightsInputHidden = this.randomMatrix(inputSize, hiddenSize)
-		this.biasHidden = this.randomMatrix(1, hiddenSize)
-		this.weightsHiddenOutput = this.randomMatrix(hiddenSize, outputSize)
-		this.biasOutput = this.randomMatrix(1, outputSize)
+		this.weightsInputHidden = new Matrix(inputSize, hiddenSize).randomize()
+		this.biasHidden = new Matrix(1, hiddenSize).randomize()
+		this.weightsHiddenOutput = new Matrix(hiddenSize, outputSize).randomize()
+		this.biasOutput = new Matrix(1, outputSize).randomize()
+
+		// this.weightsInputHidden = new Matrix(inputSize, hiddenSize).randomize().multiply(0.5)
+		// this.biasHidden = new Matrix(1, hiddenSize).randomize().multiply(0.5)
+		// this.weightsHiddenOutput = new Matrix(hiddenSize, outputSize).randomize().multiply(0.5)
+		// this.biasOutput = new Matrix(1, outputSize).randomize().multiply(0.5)
 	}
 
-	// Sigmoid activation function
-	sigmoid(x : number) : number {
+	sigmoid(x: number): number {
 		return 1 / (1 + Math.exp(-x))
 	}
 
-	// Derivative of the sigmoid function
-	sigmoidDerivative(x : number) : number {
+	sigmoidDerivative(x: number): number {
 		return x * (1 - x)
 	}
 
-	// Forward pass through the network
-	forward(input : Matrix) : Matrix {
-		const hiddenLayerOutput = this.sigmoid(
-			this.dot(input, this.weightsInputHidden)
-		)
-		const output = this.sigmoid(
-			this.dot(hiddenLayerOutput, this.weightsHiddenOutput)
-		)
-		return new Matrix(1, this.outputSize).setData([output]) // Wrap output in a Matrix
+	forward(input: Matrix): Matrix {
+		this.hiddenLayerOutput = input.dot(this.weightsInputHidden).map(x => this.sigmoid(x))
+		this.output = this.hiddenLayerOutput.dot(this.weightsHiddenOutput).map(x => this.sigmoid(x))
+		return this.output
 	}
 
-	// Backpropagation to train the network
-	train(input, target, learningRate) {
+	train(input: Matrix, target: Matrix, learningRate: number): void {
 		// Forward pass
 		this.forward(input)
 
-		// Convert hiddenLayerOutput to a matrix
-		const hiddenLayerOutputMatrix = new Matrix(1, this.hiddenSize).setData([this.hiddenLayerOutput])
-
 		// Calculate output layer error
 		const outputError = target.subtract(this.output)
-		const outputDelta = outputError.multiply(this.sigmoidDerivative(this.output))
+		const outputDelta = outputError.multiplyMatrix(this.output.map(x => this.sigmoidDerivative(x)))
 
 		// Calculate hidden layer error
-		const hiddenError = this.dot(outputDelta, this.weightsHiddenOutput.transpose())
-		const hiddenDelta = hiddenError.multiply(this.sigmoidDerivative(hiddenLayerOutputMatrix))
+		const hiddenError = outputDelta.dot(this.weightsHiddenOutput.transpose())
+		const hiddenDelta = hiddenError.multiplyMatrix(this.hiddenLayerOutput.map(x => this.sigmoidDerivative(x)))
 
 		// Update weights and biases
 		this.weightsHiddenOutput = this.weightsHiddenOutput.add(
-			hiddenLayerOutputMatrix.transpose().dot(outputDelta).multiply(learningRate)
+			this.hiddenLayerOutput.transpose().dot(outputDelta).multiply(learningRate)
 		)
 		this.biasOutput = this.biasOutput.add(outputDelta.multiply(learningRate))
 
@@ -135,28 +146,18 @@ class NeuralNetwork {
 		)
 		this.biasHidden = this.biasHidden.add(hiddenDelta.multiply(learningRate))
 	}
-
-	// Helper function to generate a matrix with random values
-	randomMatrix(rows, cols) {
-		return new Matrix(rows, cols).randomize()
-	}
-
-	// Helper function for dot product of two matrices
-	dot(a : Matrix, b : Matrix) {
-		return a.dot(b)
-	}
 }
 
 // Grid class to represent the environment
 class Grid {
 	rows : number
 	cols : number
-	grid : Array<Array<number>>
+	grid : number[][]
 
 	constructor(rows, cols) {
 		this.rows = rows
 		this.cols = cols
-		this.grid = Array.from({ length: rows }, () => Array(cols).fill(0))
+		this.grid = JSON.parse(JSON.stringify(Array.from({ length: rows }, () => Array(cols).fill(0))))
 	}
 
 	// Set obstacle at specified coordinates
@@ -182,11 +183,17 @@ class AI {
 	grid: Grid
 	neuralNetwork: NeuralNetwork
 	currentPosition: coordsType
+	movesOutputs: number[]
 
 	constructor(grid, neuralNetwork) {
 		this.grid = grid
 		this.neuralNetwork = neuralNetwork
 		this.currentPosition = { row: 0, col: 0 }
+		this.movesOutputs = []
+	}
+
+	getMovesOutput() {
+		return this.movesOutputs
 	}
 
 	// Get the input features for the neural network based on the current position
@@ -201,14 +208,30 @@ class AI {
 		const input = this.getInput()
 		const output = this.neuralNetwork.forward(input).data[0][0]
 
+		this.movesOutputs.push(output)
+
 		// Determine the next move based on the output
-		const nextMove = output > 0.5 ? `RIGHT` : `DOWN`
+		let nextMove
+
+		if (output > 0.18) {
+			nextMove = `UP`
+		} else if (output > 0.17) {
+			nextMove = `DOWN`
+		} else if (output > 0.16) {
+			nextMove = `LEFT`
+		} else if (output <= 0.15) {
+			nextMove = `RIGHT`
+		}
 
 		// Update the current position
 		if (nextMove === `RIGHT` && this.grid.isValidMove(this.currentPosition.row, this.currentPosition.col + 1)) {
 			this.currentPosition.col += 1
 		} else if (nextMove === `DOWN` && this.grid.isValidMove(this.currentPosition.row + 1, this.currentPosition.col)) {
 			this.currentPosition.row += 1
+		} else if (nextMove === `UP` && this.grid.isValidMove(this.currentPosition.row - 1, this.currentPosition.col)) {
+			this.currentPosition.row -= 1
+		} else if (nextMove === `LEFT` && this.grid.isValidMove(this.currentPosition.row, this.currentPosition.col - 1)) {
+			this.currentPosition.col -= 1
 		}
 	}
 
@@ -216,53 +239,110 @@ class AI {
 	train(epochs, learningRate) {
 		for (let epoch = 0; epoch < epochs; epoch++) {
 			// Randomly place the AI in the grid
-			this.currentPosition = { row: Math.floor(Math.random() * this.grid.rows), col: 0 }
+			this.currentPosition = aiStartPosition // { row: Math.floor(Math.random() * this.grid.rows), col: 0 }
 
 			// Randomly choose a goal position
-			const goalPosition = { row: Math.floor(Math.random() * this.grid.rows), col: this.grid.cols - 1 }
+			const goalPosition = winState
 
 			// Train the neural network to estimate the cost to the goal
 			const input = this.getInput()
-			const target = new Matrix(1, 1).setData([[1 / (goalPosition.col + 1)]])
+			const target = new Matrix(1, 1).setData([[1 / (goalPosition.row + goalPosition.col)]])
 			this.neuralNetwork.train(input, target, learningRate)
 		}
 	}
 
 	// Display the current position of the AI
 	display() {
-		const gridWithAI = JSON.parse(JSON.stringify(this.grid.grid))
-		gridWithAI[this.currentPosition.row][this.currentPosition.col] = `A`
-		console.log(gridWithAI.map(row => row.join(` `)).join(`\n`))
+		// const gridWithAI = JSON.parse(JSON.stringify(this.grid.grid))
+		// gridWithAI[this.currentPosition.row][this.currentPosition.col] = `A`
+		// console.log(gridWithAI.map(row => row.join(` `)).join(`\n`))
+
+		return { row: this.currentPosition.row, col: this.currentPosition.col }
 	}
 }
 
-// Example usage
-const grid = new Grid(5, 5)
-grid.setObstacle(2, 1)
-grid.setObstacle(3, 1)
-grid.setObstacle(4, 1)
+function getGrid() : Grid {
+	const grid = new Grid(gridSize, gridSize)
+	for (let index = 0; index < obstacles.length; index++) {
+		const obstacle = obstacles[index]
 
-const inputSize = 2
-const hiddenSize = 3
-const outputSize = 1
+		grid.setObstacle(obstacle.row, obstacle.col)
+	}
 
-const neuralNetwork = new NeuralNetwork(inputSize, hiddenSize, outputSize)
+	return grid
+}
 
-const ai = new AI(grid, neuralNetwork)
+function getNN() : NeuralNetwork {
+	return new NeuralNetwork(inputSize, hiddenSize, outputSize)
+}
 
-// Train the AI
-const trainingEpochs = 1000
-const learningRate = 0.1
-ai.train(trainingEpochs, learningRate)
+function getNNPathPostTraining(ai : AI) : pathType {
+	let path = [aiStartPosition]
+	const maxSteps = gridSize * gridSize
+	let iterations = 0
 
-// Display the initial grid
-console.log(`Initial Grid:`)
-grid.display()
-console.log(`\nTraining AI...\n`)
+	while (!(path[path.length - 1].row === winState.row && path[path.length - 1].col === winState.col) && iterations <= maxSteps) {
+		let currentState = path[path.length - 1]
 
-// Perform AI moves and display the grid after each move
-for (let i = 0; i < 5; i++) {
-	ai.move()
-	ai.display()
-	console.log(`\n`)
+		if (currentState.row > gridSize - 1 || currentState.row < 0 || currentState.col > gridSize - 1 || currentState.col < 0) {
+			console.log(ai.getMovesOutput())
+			return {
+				path,
+				complete: false,
+			}
+		}
+
+		if (iterations === maxSteps) {
+			console.log(ai.getMovesOutput())
+			return {
+				path,
+				complete: false,
+			}
+		}
+
+		ai.move()
+		path.push(ai.display())
+
+		iterations++
+	}
+
+	console.log(ai.getMovesOutput())
+
+	return {
+		path,
+		complete: true,
+	}
+}
+
+export function NeuralNet() {
+	const [isLearning, setIsLearning] = useState(false)
+	const [isStarted, setIsStarted] = useState(false)
+	const [preferredPath, setPreferredPath] = useState(null)
+	const [isCompletePath, setIsCompletePath] = useState(false)
+	const ai = useRef(new AI(getGrid(), getNN()))
+
+	useEffect(() => {
+		if (!isLearning) {
+			return
+		}
+
+		ai.current.train(trainingEpochs, learningRate)
+
+		const { path, complete } = getNNPathPostTraining(ai.current)
+		console.log(`Preferred Path:`, path)
+		setPreferredPath(path)
+		sleep(500).then(() => setIsLearning(false))
+		setIsCompletePath(complete)
+
+		if (complete) {
+			console.log(`ai:`, ai.current)
+		}
+	}, [isLearning])
+
+	return <GridUi preferredPath={preferredPath}
+		isStarted={isStarted}
+		setIsStarted={setIsStarted}
+		isLearning={isLearning}
+		setIsLearning={setIsLearning}
+		isCompletePath={isCompletePath}/>
 }
