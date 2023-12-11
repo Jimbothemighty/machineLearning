@@ -1,4 +1,4 @@
-import { aiStartPosition, alpha, discountFactor, episodesBatchSize, gridSize, loseState, numActions, numEpisodes, obstacles, winState } from "~/assets/components/MachineLearning/BellmanSimple/fixtures"
+import { aiStartPosition, alpha, discountFactor, gridSize, loseState, maxLoopIterations, numActions, numEpisodes, obstacles, winState } from "~/assets/components/MachineLearning/BellmanSimple/fixtures"
 
 // Bellman equation function
 export function bellmanEquation(currentState, action : number, nextState, reward : number, qValues) {
@@ -14,24 +14,15 @@ export function bellmanEquation(currentState, action : number, nextState, reward
 
 	let updatedQValue : number = currentQValue + alpha * (reward + discountFactor * maxNextQValue - currentQValue)
 
-	if (currentState.row === 1 && currentState.col === 0) {
-		debugger
-	}
-	if (currentState.row === 0 && currentState.col === 0) {
-		debugger
-	}
-
 	qValues[currentState.row][currentState.col][action] = updatedQValue
 }
 
-export function qLearningBatch(currentEpisode, qValues) : number {
-	let modifierForThisLoop = currentEpisode
-	for (let episode = currentEpisode; episode < numEpisodes && episode < modifierForThisLoop + episodesBatchSize; episode++) {
+export function qLearningBatch(qValues) {
+	for (let episode = 0; episode < numEpisodes; episode++) {
 		qLearning(qValues)
-		currentEpisode = currentEpisode + 1
+		console.log(`qLearning completed`)
+		console.log(qValues)
 	}
-
-	return currentEpisode
 }
 
 // Q-learning function
@@ -40,12 +31,13 @@ export function qLearning(qValues) {
 	let isTerminal = false
 	let numRandomActionsTaken = 0
 	let numMaximisedActionTaken = 0
+	let iterations = 0
 
-	while (!isTerminal) {
+	while (!isTerminal && iterations < maxLoopIterations) {
 		// console.log(`learning while loop iteration ${iterations}`)
 		let action
 
-		if (Math.random() < 0.2) {
+		if (Math.random() < 0.1) {
 			action = Math.floor(Math.random() * numActions)
 			numRandomActionsTaken++
 		} else {
@@ -64,7 +56,7 @@ export function qLearning(qValues) {
 
 		if (nextState.row >= 0 && nextState.row < gridSize && nextState.col >= 0 && nextState.col < gridSize) {
 			if (obstacles.some(obstacle => obstacle.row === nextState.row && obstacle.col === nextState.col)) {
-				console.log(`found an obstacle`)
+				// console.log(`found an obstacle`)
 				// let reward = -0.5
 				// bellmanEquation(currentState, action, nextState, reward, discountFactor, qValues)
 
@@ -72,13 +64,13 @@ export function qLearning(qValues) {
 
 				// state is unchanged!
 			} else if (nextState.row > gridSize - 1 || nextState.row < 0 || nextState.col > gridSize - 1 || nextState.col < 0) {
-				console.log(`found an edge INNER`)
+				// console.log(`found an edge INNER`)
 				// let reward = -0.4
 				// bellmanEquation(currentState, action, nextState, reward, discountFactor, qValues)
 
 				// state is unchanged!
 			} else {
-				let reward = 0.4
+				let reward = 0
 
 				if (nextState.row === winState.row && nextState.col === winState.col) {
 					reward = 1
@@ -99,6 +91,8 @@ export function qLearning(qValues) {
 			// let reward = -0.2
 			// bellmanEquation(currentState, action, nextState, reward, discountFactor, qValues)
 		}
+
+		iterations++
 	}
 
 	// console.log(`numRandomActionsTaken ${numRandomActionsTaken.toString()}`)
@@ -118,11 +112,20 @@ type pathType = {
 // Get preferred path function
 export function getPreferredPath(qValues) : pathType {
 	let path = [aiStartPosition]
+	const maxSteps = gridSize * gridSize
+	let iterations = 0
 
-	while (!(path[path.length - 1].row === winState.row && path[path.length - 1].col === winState.col)) {
+	while (!(path[path.length - 1].row === winState.row && path[path.length - 1].col === winState.col) && iterations <= maxSteps) {
 		let currentState = path[path.length - 1]
 
 		if (currentState.row > gridSize - 1 || currentState.row < 0 || currentState.col > gridSize - 1 || currentState.col < 0) {
+			return {
+				path,
+				complete: false,
+			}
+		}
+
+		if (iterations === maxSteps) {
 			return {
 				path,
 				complete: false,
@@ -141,6 +144,8 @@ export function getPreferredPath(qValues) : pathType {
 		}
 
 		path.push(nextState)
+
+		iterations++
 	}
 
 	return {

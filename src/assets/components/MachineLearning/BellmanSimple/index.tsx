@@ -10,18 +10,24 @@ export function BellmanSimple() {
 	const [isStarted, setIsStarted] = useState(false)
 	const [preferredPath, setPreferredPath] = useState(null)
 	const [isCompletePath, setIsCompletePath] = useState(false)
-	const [episode, setEpisode] = useState(0)
-	const qValues : MutableRefObject<Array<Array<Array<number>>>> = useRef(Array.from({ length: gridSize }, () => Array(gridSize).fill(Array(numActions).fill(0))))
+	// const [episode, setEpisode] = useState(0)
+	const qValues : MutableRefObject<Array<Array<Array<number>>>> = useRef(
+		JSON.parse(
+			JSON.stringify(
+				Array.from({ length: gridSize }, () => Array(gridSize).fill(Array(numActions).fill(0)))
+			)
+		)
+	)
 
 	useEffect(() => {
 		if (!isLearning) {
 			return
 		}
 
-		// console.log(`started learning`)
-		const currentEpisode = qLearningBatch(episode, qValues.current)
-		// console.log(`finished learning`)
-		setEpisode(currentEpisode)
+		console.log(`started learning`)
+		qLearningBatch(qValues.current)
+		console.log(`finished learning`)
+		// setEpisode(currentEpisode)
 
 		const { path, complete } = getPreferredPath(qValues.current)
 		console.log(`Preferred Path:`, path)
@@ -57,7 +63,6 @@ export function BellmanSimple() {
 					</div>
 					<div>
 						<h3>Training Info</h3>
-						<p>Episodes Complete: {episode}</p>
 						<p>Did find path: {!isCompletePath ? `No` : `Yes`}</p>
 					</div>
 				</div>
