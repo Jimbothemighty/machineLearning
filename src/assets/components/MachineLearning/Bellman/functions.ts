@@ -104,7 +104,7 @@ export type coordsType = {
 	row: number
 }
 
-type pathType = {
+export type pathType = {
 	path: Array<coordsType>
 	complete: boolean
 }

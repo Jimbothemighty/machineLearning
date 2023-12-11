@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
-import styles from "./../Bellman.module.css"
+import styles from "~/assets/components/MachineLearning/MachineLearning.module.css"
 import { aiStartPosition, gridSize, loseState, obstacles, winState } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { sleep } from "~/assets/components/MachineLearning/Bellman/functions"
+import Button from "~/assets/components/Controls/Button"
 
-export function DrawGrid({ isStarted, onFinish, preferredPath }) {
+function DrawGrid({ isStarted, onFinish, preferredPath }) {
 	const [aiLocation, setAiLocation] = useState(aiStartPosition)
 	const grid = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, (e, i) => i))
 
@@ -38,5 +39,38 @@ export function DrawGrid({ isStarted, onFinish, preferredPath }) {
 			}
 			</div>
 		})}
+	</div>
+}
+
+function GridLegend({ isCompletePath }) {
+	return <div style={{ display: `flex`, gap: `10px` }}>
+		<div>
+			<h3>Legend</h3>
+			<p>Yellow: AI location</p>
+			<p>Green: Win location</p>
+			<p>Red: Lose location</p>
+			<p>Grey: Obstacle location</p>
+		</div>
+		<div>
+			<h3>Training Info</h3>
+			<p>Did find path: {!isCompletePath ? `No` : `Yes`}</p>
+		</div>
+	</div>
+}
+
+export function GridUi({ preferredPath, isStarted, setIsStarted, isLearning, setIsLearning, isCompletePath }) {
+	return <div>
+		<div>{preferredPath && JSON.stringify(preferredPath)}</div>
+		<br/>
+		<div className={styles.flexGap}>
+			<DrawGrid isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} />
+			<div>
+				<div className={styles.flexGap}>
+					<Button label={isLearning ? `Training...` : `Start Learning`} onClick={() => setIsLearning(true)} disabled={isLearning}/>
+					<Button label={`Step learned path`} onClick={() => setIsStarted(true)} disabled={isLearning || isStarted || !preferredPath}/>
+				</div>
+				<GridLegend isCompletePath={isCompletePath}/>
+			</div>
+		</div>
 	</div>
 }

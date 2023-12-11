@@ -1,9 +1,7 @@
 import { MutableRefObject, useEffect, useRef, useState } from "react"
-import styles from "./Bellman.module.css"
-import Button from "~/assets/components/Controls/Button"
 import { gridSize, numActions } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { getPreferredPath, qLearningBatch, sleep } from "~/assets/components/MachineLearning/Bellman/functions"
-import { DrawGrid } from "~/assets/components/MachineLearning/Bellman/DrawGrid"
+import { GridUi } from "~/assets/components/MachineLearning/components/GridUi"
 
 export function Bellman() {
 	const [isLearning, setIsLearning] = useState(false)
@@ -40,33 +38,10 @@ export function Bellman() {
 		}
 	}, [isLearning])
 
-	// console.log(`isStarted ${isStarted.toString()}`)
-	// console.log(`isLearning ${isLearning.toString()}`)
-
-	return <div>
-		<div>{preferredPath && JSON.stringify(preferredPath)}</div>
-		<br/>
-		<div className={styles.flexGap}>
-			<DrawGrid isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} />
-			<div>
-				<div className={styles.flexGap}>
-					<Button label={isLearning ? `Training...` : `Start Learning`} onClick={() => setIsLearning(true)} disabled={isLearning}/>
-					<Button label={`Step learned path`} onClick={() => setIsStarted(true)} disabled={isLearning || isStarted || !preferredPath}/>
-				</div>
-				<div className={styles.flexGap}>
-					<div>
-						<h3>Legend</h3>
-						<p>Yellow: AI location</p>
-						<p>Green: Win location</p>
-						<p>Red: Lose location</p>
-						<p>Grey: Obstacle location</p>
-					</div>
-					<div>
-						<h3>Training Info</h3>
-						<p>Did find path: {!isCompletePath ? `No` : `Yes`}</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+	return <GridUi preferredPath={preferredPath}
+		isStarted={isStarted}
+		setIsStarted={setIsStarted}
+		isLearning={isLearning}
+		setIsLearning={setIsLearning}
+		isCompletePath={isCompletePath}/>
 }
