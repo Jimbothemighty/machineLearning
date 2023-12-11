@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 import styles from "~/assets/components/MachineLearning/MachineLearning.module.css"
-import { aiStartPosition, gridSize, loseState, obstacles, winState } from "~/assets/components/MachineLearning/Bellman/fixtures"
+import { gridSize, loseState, obstacles } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { sleep } from "~/assets/components/MachineLearning/Bellman/functions"
 import Button from "~/assets/components/Controls/Button"
 
-function DrawGrid({ isStarted, onFinish, preferredPath }) {
-	const [aiLocation, setAiLocation] = useState(aiStartPosition)
+function DrawGrid({ isStarted, onFinish, preferredPath, startState, winState }) {
+	const [aiLocation, setAiLocation] = useState(startState)
 	const grid = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, (e, i) => i))
 
 	useEffect(() => {
@@ -42,7 +42,7 @@ function DrawGrid({ isStarted, onFinish, preferredPath }) {
 	</div>
 }
 
-function GridLegend({ isCompletePath }) {
+function GridLegend({ isCompletePath, preferredPath, startState, winState }) {
 	return <div style={{ display: `flex`, gap: `10px` }}>
 		<div>
 			<h3>Legend</h3>
@@ -54,22 +54,25 @@ function GridLegend({ isCompletePath }) {
 		<div>
 			<h3>Training Info</h3>
 			<p>Did find path: {!isCompletePath ? `No` : `Yes`}</p>
+			<p>Start: {JSON.stringify(startState)}</p>
+			<p>Goal: {JSON.stringify(winState)}</p>
+			<p>Steps: {preferredPath === null ? `N/A` : preferredPath.length}</p>
 		</div>
 	</div>
 }
 
-export function GridUi({ preferredPath, isStarted, setIsStarted, isLearning, setIsLearning, isCompletePath }) {
+export function GridUi({ preferredPath, isStarted, setIsStarted, isLearning, setIsLearning, isCompletePath, startState, winState }) {
 	return <div>
-		<div>{preferredPath && JSON.stringify(preferredPath)}</div>
+		{/* <div>{preferredPath && JSON.stringify(preferredPath)}</div> */}
 		<br/>
 		<div className={styles.flexGap}>
-			<DrawGrid isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} />
+			<DrawGrid isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} startState={startState} winState={winState} />
 			<div>
 				<div className={styles.flexGap}>
 					<Button label={isLearning ? `Training...` : `Start Learning`} onClick={() => setIsLearning(true)} disabled={isLearning}/>
 					<Button label={`Step learned path`} onClick={() => setIsStarted(true)} disabled={isLearning || isStarted || !preferredPath}/>
 				</div>
-				<GridLegend isCompletePath={isCompletePath}/>
+				<GridLegend isCompletePath={isCompletePath} preferredPath={preferredPath} startState={startState} winState={winState}/>
 			</div>
 		</div>
 	</div>

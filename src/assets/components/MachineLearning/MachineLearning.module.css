@@ -32,6 +32,10 @@
 	color: black;
 }
 
+.bellmanGridCol.aiLocation.win {
+	background-color: purple;
+}
+
 .flexGap {
 	display: flex;
 	gap: 10px

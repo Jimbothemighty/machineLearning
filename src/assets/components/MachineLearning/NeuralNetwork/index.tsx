@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { aiStartPosition, gridSize, obstacles, winState } from "~/assets/components/MachineLearning/Bellman/fixtures"
+import { gridSize, obstacles } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { coordsType, pathType, sleep } from "~/assets/components/MachineLearning/Bellman/functions"
 import { GridUi } from "~/assets/components/MachineLearning/components/GridUi"
 
@@ -7,7 +7,7 @@ const inputSize = 2
 const hiddenSize = 3
 const outputSize = 1
 
-const trainingEpochs = 10000
+const trainingEpochs = 1000
 const learningRate = 0.1
 
 class Matrix {
@@ -114,7 +114,7 @@ class NeuralNetwork {
 	}
 
 	sigmoidDerivative(x: number): number {
-		return x * (1 - x)
+		return this.sigmoid(x) * (1 - this.sigmoid(x))
 	}
 
 	forward(input: Matrix): Matrix {
@@ -182,13 +182,15 @@ class Grid {
 class AI {
 	grid: Grid
 	neuralNetwork: NeuralNetwork
+	startPosition: coordsType
 	currentPosition: coordsType
+	goalPosition: coordsType
 	movesOutputs: number[]
 
 	constructor(grid, neuralNetwork) {
 		this.grid = grid
 		this.neuralNetwork = neuralNetwork
-		this.currentPosition = { row: 0, col: 0 }
+		this.currentPosition = null
 		this.movesOutputs = []
 	}
 
@@ -206,31 +208,40 @@ class AI {
 	// Move the AI based on the output of the neural network
 	move() {
 		const input = this.getInput()
-		const output = this.neuralNetwork.forward(input).data[0][0]
+		const outputMatrix = this.neuralNetwork.forward(input)
+		const output = outputMatrix.data[0] // Assuming the output is an array of probabilities for [UP, RIGHT, DOWN, LEFT]
 
-		this.movesOutputs.push(output)
-
-		// Determine the next move based on the output
-		let nextMove
-
-		if (output > 0.18) {
-			nextMove = `UP`
-		} else if (output > 0.17) {
-			nextMove = `DOWN`
-		} else if (output > 0.16) {
-			nextMove = `LEFT`
-		} else if (output <= 0.15) {
-			nextMove = `RIGHT`
+		const moveProbabilities = {
+			UP: output[0],
+			RIGHT: output[1],
+			DOWN: output[2],
+			LEFT: output[3],
 		}
 
-		// Update the current position
-		if (nextMove === `RIGHT` && this.grid.isValidMove(this.currentPosition.row, this.currentPosition.col + 1)) {
+		// this.movesOutputs.push(moveProbabilities)
+
+		// Determine the next move based on the output
+		if (Math.random() < 0.2) {
+			const possibleMoves = Object.keys(moveProbabilities)
+			const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]
+
+			this.executeMove(randomMove)
+		} else {
+			const nextMove = Object.keys(moveProbabilities)
+				.reduce((a, b) => moveProbabilities[a] > moveProbabilities[b] ? a : b)
+
+			this.executeMove(nextMove)
+		}
+	}
+
+	executeMove(move) {
+		if (move === `RIGHT` && this.grid.isValidMove(this.currentPosition.row, this.currentPosition.col + 1)) {
 			this.currentPosition.col += 1
-		} else if (nextMove === `DOWN` && this.grid.isValidMove(this.currentPosition.row + 1, this.currentPosition.col)) {
+		} else if (move === `DOWN` && this.grid.isValidMove(this.currentPosition.row + 1, this.currentPosition.col)) {
 			this.currentPosition.row += 1
-		} else if (nextMove === `UP` && this.grid.isValidMove(this.currentPosition.row - 1, this.currentPosition.col)) {
+		} else if (move === `UP` && this.grid.isValidMove(this.currentPosition.row - 1, this.currentPosition.col)) {
 			this.currentPosition.row -= 1
-		} else if (nextMove === `LEFT` && this.grid.isValidMove(this.currentPosition.row, this.currentPosition.col - 1)) {
+		} else if (move === `LEFT` && this.grid.isValidMove(this.currentPosition.row, this.currentPosition.col - 1)) {
 			this.currentPosition.col -= 1
 		}
 	}
@@ -239,26 +250,44 @@ class AI {
 	train(epochs, learningRate) {
 		for (let epoch = 0; epoch < epochs; epoch++) {
 			// Randomly place the AI in the grid
-			this.currentPosition = aiStartPosition // { row: Math.floor(Math.random() * this.grid.rows), col: 0 }
+
+			this.startPosition = {
+				row: Math.floor(Math.random() * this.grid.rows),
+				col: Math.floor(Math.random() * this.grid.cols),
+			} // aiStartPosition // { row: Math.floor(Math.random() * this.grid.rows), col: 0 }
 
 			// Randomly choose a goal position
-			const goalPosition = winState
+			this.goalPosition = {
+				row: Math.floor(Math.random() * this.grid.rows),
+				col: Math.floor(Math.random() * this.grid.cols),
+			} // winState
+
+			this.currentPosition = { ...this.startPosition } // clone
 
 			// Train the neural network to estimate the cost to the goal
 			const input = this.getInput()
-			const target = new Matrix(1, 1).setData([[1 / (goalPosition.row + goalPosition.col)]])
+
+			// Calculate the reward for the current state
+			const currentStateReward = simpleRewardSignal(this.currentPosition, this.goalPosition)
+
+			// Train the neural network to estimate the cost to the goal with the reward signal
+			const target = new Matrix(1, 1).setData([[currentStateReward]])
 			this.neuralNetwork.train(input, target, learningRate)
 		}
 	}
 
 	// Display the current position of the AI
 	display() {
-		// const gridWithAI = JSON.parse(JSON.stringify(this.grid.grid))
-		// gridWithAI[this.currentPosition.row][this.currentPosition.col] = `A`
-		// console.log(gridWithAI.map(row => row.join(` `)).join(`\n`))
-
 		return { row: this.currentPosition.row, col: this.currentPosition.col }
 	}
+}
+
+function simpleRewardSignal(currentPosition, goalPosition) {
+	const distance = Math.abs(currentPosition.row - goalPosition.row) + Math.abs(currentPosition.col - goalPosition.col)
+
+	const reward = 1 / (distance + 1)
+	console.log(`distance: ${distance}, reward: ${reward}`)
+	return 1 / (distance + 1) // Increase reward as the AI gets closer to the goal
 }
 
 function getGrid() : Grid {
@@ -277,15 +306,15 @@ function getNN() : NeuralNetwork {
 }
 
 function getNNPathPostTraining(ai : AI) : pathType {
-	let path = [aiStartPosition]
-	const maxSteps = gridSize * gridSize
+	let path = [ai.startPosition]
+	const maxSteps = gridSize * gridSize * 100
 	let iterations = 0
+	const winState = ai.goalPosition
 
 	while (!(path[path.length - 1].row === winState.row && path[path.length - 1].col === winState.col) && iterations <= maxSteps) {
 		let currentState = path[path.length - 1]
 
 		if (currentState.row > gridSize - 1 || currentState.row < 0 || currentState.col > gridSize - 1 || currentState.col < 0) {
-			console.log(ai.getMovesOutput())
 			return {
 				path,
 				complete: false,
@@ -293,7 +322,6 @@ function getNNPathPostTraining(ai : AI) : pathType {
 		}
 
 		if (iterations === maxSteps) {
-			console.log(ai.getMovesOutput())
 			return {
 				path,
 				complete: false,
@@ -306,7 +334,7 @@ function getNNPathPostTraining(ai : AI) : pathType {
 		iterations++
 	}
 
-	console.log(ai.getMovesOutput())
+	console.log(path)
 
 	return {
 		path,
@@ -319,6 +347,8 @@ export function NeuralNet() {
 	const [isStarted, setIsStarted] = useState(false)
 	const [preferredPath, setPreferredPath] = useState(null)
 	const [isCompletePath, setIsCompletePath] = useState(false)
+	const [localWinState, setLocalWinState] = useState<coordsType>({ row: -1, col: -1 })
+	const [localStartState, setLocalStartState] = useState<coordsType>({ row: -1, col: -1 })
 	const ai = useRef(new AI(getGrid(), getNN()))
 
 	useEffect(() => {
@@ -327,15 +357,17 @@ export function NeuralNet() {
 		}
 
 		ai.current.train(trainingEpochs, learningRate)
+		setLocalStartState(ai.current.startPosition)
+		setLocalWinState(ai.current.goalPosition)
 
 		const { path, complete } = getNNPathPostTraining(ai.current)
-		console.log(`Preferred Path:`, path)
+
 		setPreferredPath(path)
 		sleep(500).then(() => setIsLearning(false))
 		setIsCompletePath(complete)
 
 		if (complete) {
-			console.log(`ai:`, ai.current)
+			console.log(`COMPLETE: ai:`, ai.current)
 		}
 	}, [isLearning])
 
@@ -344,5 +376,7 @@ export function NeuralNet() {
 		setIsStarted={setIsStarted}
 		isLearning={isLearning}
 		setIsLearning={setIsLearning}
-		isCompletePath={isCompletePath}/>
+		isCompletePath={isCompletePath}
+		startState={localStartState}
+		winState={localWinState}/>
 }

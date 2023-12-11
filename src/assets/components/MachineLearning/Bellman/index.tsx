@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useRef, useState } from "react"
-import { gridSize, numActions } from "~/assets/components/MachineLearning/Bellman/fixtures"
+import { aiStartPosition, gridSize, numActions, winState } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { getPreferredPath, qLearningBatch, sleep } from "~/assets/components/MachineLearning/Bellman/functions"
 import { GridUi } from "~/assets/components/MachineLearning/components/GridUi"
 
@@ -43,5 +43,7 @@ export function Bellman() {
 		setIsStarted={setIsStarted}
 		isLearning={isLearning}
 		setIsLearning={setIsLearning}
-		isCompletePath={isCompletePath}/>
+		isCompletePath={isCompletePath}
+		startState={aiStartPosition}
+		winState={winState}/>
 }
