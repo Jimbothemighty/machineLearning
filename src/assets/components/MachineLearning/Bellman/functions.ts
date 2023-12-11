@@ -1,4 +1,4 @@
-import { aiStartPosition, alpha, discountFactor, gridSize, loseState, maxLoopIterations, numActions, numEpisodes, obstacles, winState } from "~/assets/components/MachineLearning/BellmanSimple/fixtures"
+import { aiStartPosition, alpha, discountFactor, gridSize, loseState, maxLoopIterations, numActions, numEpisodes, obstacles, winState } from "~/assets/components/MachineLearning/Bellman/fixtures"
 
 // Bellman equation function
 export function bellmanEquation(currentState, action : number, nextState, reward : number, qValues) {
@@ -99,7 +99,7 @@ export function qLearning(qValues) {
 	// console.log(`numMaximisedActionTaken ${numMaximisedActionTaken.toString()}`)
 }
 
-type coordsType = {
+export type coordsType = {
 	col: number,
 	row: number
 }

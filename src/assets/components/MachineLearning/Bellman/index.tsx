@@ -1,11 +1,11 @@
 import { MutableRefObject, useEffect, useRef, useState } from "react"
-import styles from "./BellmanSimple.module.css"
+import styles from "./Bellman.module.css"
 import Button from "~/assets/components/Controls/Button"
-import { gridSize, numActions } from "~/assets/components/MachineLearning/BellmanSimple/fixtures"
-import { getPreferredPath, qLearningBatch, sleep } from "~/assets/components/MachineLearning/BellmanSimple/functions"
-import { DrawGrid } from "~/assets/components/MachineLearning/BellmanSimple/DrawGrid"
+import { gridSize, numActions } from "~/assets/components/MachineLearning/Bellman/fixtures"
+import { getPreferredPath, qLearningBatch, sleep } from "~/assets/components/MachineLearning/Bellman/functions"
+import { DrawGrid } from "~/assets/components/MachineLearning/Bellman/DrawGrid"
 
-export function BellmanSimple() {
+export function Bellman() {
 	const [isLearning, setIsLearning] = useState(false)
 	const [isStarted, setIsStarted] = useState(false)
 	const [preferredPath, setPreferredPath] = useState(null)

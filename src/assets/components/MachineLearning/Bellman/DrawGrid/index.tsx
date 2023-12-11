@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
-import styles from "./../BellmanSimple.module.css"
-import { aiStartPosition, gridSize, loseState, obstacles, winState } from "~/assets/components/MachineLearning/BellmanSimple/fixtures"
-import { sleep } from "~/assets/components/MachineLearning/BellmanSimple/functions"
+import styles from "./../Bellman.module.css"
+import { aiStartPosition, gridSize, loseState, obstacles, winState } from "~/assets/components/MachineLearning/Bellman/fixtures"
+import { sleep } from "~/assets/components/MachineLearning/Bellman/functions"
 
 export function DrawGrid({ isStarted, onFinish, preferredPath }) {
 	const [aiLocation, setAiLocation] = useState(aiStartPosition)

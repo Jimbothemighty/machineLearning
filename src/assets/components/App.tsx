@@ -1,19 +1,19 @@
 import { NavBar } from "./NavBar"
-import "~/assets/css/style.css"
 import { Tab, Tabs } from "~/assets/components/Tabs"
-import * as React from "react"
-import { BellmanSimple } from "~/assets/components/MachineLearning/BellmanSimple"
+import { Bellman } from "~/assets/components/MachineLearning/Bellman"
+import { NeuralNet } from "~/assets/components/MachineLearning/NeuralNetwork"
+import "~/assets/css/style.css"
 
 export function App() {
 	return <div className="App">
 		<NavBar />
 		<div style={{ padding: `10px` }}>
 			<Tabs>
-				<Tab label="Simple Bellman">
-					<BellmanSimple/>
+				<Tab label="Neural Network">
+					<NeuralNet/>
 				</Tab>
-				<Tab label="Not yet added">
-					<h3>Todo</h3>
+				<Tab label="Simple Bellman">
+					<Bellman/>
 				</Tab>
 			</Tabs>
 		</div>
