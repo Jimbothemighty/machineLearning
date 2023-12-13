@@ -18,7 +18,7 @@ export const obstacles = [
 	{ row: 5, col: 3 },
 	{ row: 5, col: 4 },
 	{ row: 5, col: 5 },
-	{ row: 5, col: 6 },
+	// { row: 5, col: 6 },
 	{ row: 5, col: 7 },
 	{ row: 0, col: 4 },
 	{ row: 0, col: 6 },
@@ -31,7 +31,7 @@ export const aiStartPosition = { row: gridSize - 1, col: 0 } // AI starts at the
 // Learning parameters
 export const alpha = 0.1 // learning rate
 export const discountFactor = 0.9 // discount factor
-export const numEpisodes = 1000 // number of training episodes // default was 1000!
+export const numEpisodes = 10000 // number of training episodes // default was 1000!
 
 // Other Constraints
 export const maxLoopIterations = 10000000

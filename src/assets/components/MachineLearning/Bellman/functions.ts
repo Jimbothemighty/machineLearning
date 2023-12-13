@@ -37,7 +37,7 @@ export function qLearning(qValues) {
 		// console.log(`learning while loop iteration ${iterations}`)
 		let action
 
-		if (Math.random() < 0.1) {
+		if (Math.random() < 0.2) {
 			action = Math.floor(Math.random() * numActions)
 			numRandomActionsTaken++
 		} else {
