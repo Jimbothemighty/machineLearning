@@ -371,12 +371,15 @@ export function NeuralNet() {
 		}
 	}, [isLearning])
 
-	return <GridUi preferredPath={preferredPath}
+	return <GridUi
+		gridSize={gridSize}
+		preferredPath={preferredPath}
 		isStarted={isStarted}
 		setIsStarted={setIsStarted}
 		isLearning={isLearning}
 		setIsLearning={setIsLearning}
 		isCompletePath={isCompletePath}
 		startState={localStartState}
-		winState={localWinState}/>
+		winState={localWinState}
+		notes={``}/>
 }
