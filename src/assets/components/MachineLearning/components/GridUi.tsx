@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import styles from "~/assets/components/MachineLearning/MachineLearning.module.css"
-import { gridSize, loseState, obstacles } from "~/assets/components/MachineLearning/Bellman/fixtures"
+import { loseState } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { sleep } from "~/assets/components/MachineLearning/Bellman/functions"
 import Button from "~/assets/components/Controls/Button"
 
-function DrawGrid({ isStarted, onFinish, preferredPath, startState, winState }) {
+function DrawGrid({ gridSize, obstacles, isStarted, onFinish, preferredPath, startState, winState }) {
 	const [aiLocation, setAiLocation] = useState(startState)
 	const grid = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, (e, i) => i))
 
@@ -42,7 +42,7 @@ function DrawGrid({ isStarted, onFinish, preferredPath, startState, winState }) 
 	</div>
 }
 
-function GridLegend({ isCompletePath, preferredPath, startState, winState }) {
+function GridLegend({ isCompletePath, preferredPath, startState, winState, notes }) {
 	return <div style={{ display: `flex`, gap: `10px` }}>
 		<div>
 			<h3>Legend</h3>
@@ -61,18 +61,19 @@ function GridLegend({ isCompletePath, preferredPath, startState, winState }) {
 	</div>
 }
 
-export function GridUi({ preferredPath, isStarted, setIsStarted, isLearning, setIsLearning, isCompletePath, startState, winState }) {
+export function GridUi({ gridSize, obstacles, preferredPath, isStarted, setIsStarted, isLearning, setIsLearning, isCompletePath, startState, winState, notes }) {
 	return <div>
 		{/* <div>{preferredPath && JSON.stringify(preferredPath)}</div> */}
 		<br/>
 		<div className={styles.flexGap}>
-			<DrawGrid isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} startState={startState} winState={winState} />
+			<DrawGrid gridSize={gridSize} obstacles={obstacles} isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} startState={startState} winState={winState} />
 			<div>
-				<div className={styles.flexGap}>
+				<div className={styles.flexGap} style={{ alignItems: `center` }}>
 					<Button label={isLearning ? `Training...` : `Start Learning`} onClick={() => setIsLearning(true)} disabled={isLearning}/>
 					<Button label={`Step learned path`} onClick={() => setIsStarted(true)} disabled={isLearning || isStarted || !preferredPath}/>
+					{notes}
 				</div>
-				<GridLegend isCompletePath={isCompletePath} preferredPath={preferredPath} startState={startState} winState={winState}/>
+				<GridLegend isCompletePath={isCompletePath} preferredPath={preferredPath} startState={startState} winState={winState} notes={notes}/>
 			</div>
 		</div>
 	</div>
