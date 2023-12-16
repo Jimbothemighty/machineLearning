@@ -4,15 +4,18 @@ import tensorflow as tf
 
 class DQNAgent:
     def __init__(self, actions, state_size, learning_rate=0.01, discount_factor=0.95):
-        self.actions = actions
+        self.actions = actions  # List of possible actions
         self.state_size = state_size
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.model = self.create_model()
 
+        # Epsilon-greedy strategy parameters
         self.epsilon = 0.95
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
+
+        # Training data tracking
         self.times_trained = 0
         self.batch_size = 10
         self.this_batch = []
@@ -20,7 +23,7 @@ class DQNAgent:
 
     def create_model(self):
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Dense(24, input_dim=self.state_size, activation='relu'))
+        model.add(tf.keras.layers.Dense(24, input_shape=(self.state_size,), activation='relu'))
         model.add(tf.keras.layers.Dense(24, activation='relu'))
         model.add(tf.keras.layers.Dense(len(self.actions), activation='linear'))
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
@@ -39,21 +42,24 @@ class DQNAgent:
     def get_aggregates(self):
         return self.av_steps_per_training_batch
 
-    async def train(self, state, action_index, reward, next_state, done):
+    def train(self, state, action_index, reward, next_state, done):
         state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)
         next_state_tensor = tf.convert_to_tensor([next_state], dtype=tf.float32)
 
-        current_q = self.model.predict(state_tensor)
-        next_q = self.model.predict(next_state_tensor)
+        with tf.GradientTape() as tape:
+            current_q = self.model(state_tensor, training=True)
+            next_q = self.model(next_state_tensor, training=True)
+            updated_q = current_q.numpy()
+            max_next_q = np.max(next_q.numpy(), axis=1)
 
-        updated_q = current_q.numpy()
-        if done:
-            updated_q[0][action_index] = reward
-        else:
-            max_q_value = np.max(next_q)
-            updated_q[0][action_index] = reward + self.discount_factor * max_q_value
+            updated_q[0, action_index] = reward if done else reward + self.discount_factor * max_next_q
 
-        self.model.fit(state_tensor, updated_q, epochs=1)
+            # Compute loss
+            loss = tf.keras.losses.mean_squared_error(current_q, updated_q)
+
+        # Perform gradient update
+        grads = tape.gradient(loss, self.model.trainable_variables)
+        self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
     def choose_action(self, state):
         if np.random.rand() < self.epsilon:
@@ -61,8 +67,7 @@ class DQNAgent:
         else:
             state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)
             q_values = self.model.predict(state_tensor)
-            action_index = np.argmax(q_values[0])
-            return self.actions[action_index]
+            return np.argmax(q_values[0])
 
     def update_epsilon(self):
         if self.epsilon > self.epsilon_min:
@@ -170,8 +175,10 @@ def train_agent(agent, grid_size, obstacles, episodes):
 agent = DQNAgent([0, 1, 2, 3], 2)
 grid_size = 5
 obstacles = []
-num_trainings = 1
+num_trainings = 10
 
-path_data = train_agent(agent, grid_size, obstacles, num_trainings)
+print(tf.__version__)
 
-print(json.dumps(path_data))
+# path_data = train_agent(agent, grid_size, obstacles, num_trainings)
+
+# print(json.dumps(path_data))
