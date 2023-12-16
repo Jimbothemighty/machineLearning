@@ -12,7 +12,9 @@ class DQNAgent {
 	private readonly stateSize: number
 
 	// epsilon-greedy properties
-	private epsilon: number = 1.0
+	private epsilon: number = 0.95 /* 1.0 number between 0 and 1. 1 = random, 0 is explicit to algorithm.
+	we'll drop from 1 to 0.5 after 1st pass. Then gradually decay thereafter
+	maybe 0.3-0.4 is a good value */
 	private epsilonMin: number = 0.01
 	private epsilonDecay: number = 0.995
 
@@ -167,12 +169,16 @@ class GridEnvironment {
 			reward = 1
 			done = true
 		} else if (this.obstacles.some(obstacle => obstacle.row === this.agentPosition.x && obstacle.col === this.agentPosition.y)) {
-			reward = -((this.gridSize - 1) * 2)
+			reward = this.getObstacleCost()
 		} else {
 			reward = this.getDistanceLivingCost()
 		}
 
 		return { state: this.getState(), reward, done }
+	}
+
+	private getObstacleCost() {
+		return this.getDistanceLivingCost() * 2
 	}
 
 	private getDistanceLivingCost() {
@@ -189,7 +195,7 @@ class GridEnvironment {
 }
 
 async function trainAgent(agent : DQNAgent, gridSize : number, obstacles, episodes: number): Promise<pathType> {
-	const env = new GridEnvironment(gridSize, obstacles) // 5x5 grid
+	const env = new GridEnvironment(gridSize, obstacles)
 
 	let stepsTaken : pathType = null
 
@@ -210,12 +216,19 @@ async function trainAgent(agent : DQNAgent, gridSize : number, obstacles, episod
 			const originalState = state
 			const { state: nextState, reward, done: isDone } = env.step(action)
 
+			const isValidMove = state[0] >= 0 && state[0] <= gridSize - 1 && state[1] >= 0 && state[1] <= gridSize - 1
+
+			if (!isValidMove) {
+				// it tried to move outside the bounds of the grid
+				continue
+			}
+
 			// console.log(`training ${iteration}`)
 			await agent.train(originalState, action, reward, nextState, isDone)
 			// console.log(`training end ${iteration}`)
 
 			if (true) {
-			// only degrade epsilon under a circumstance??
+				// only degrade epsilon under a circumstance??
 				agent.updateEpsilon()
 			}
 
@@ -242,13 +255,13 @@ async function trainAgent(agent : DQNAgent, gridSize : number, obstacles, episod
 	return stepsTaken
 }
 
-function TensorFlow({ gridSize, obstacles, numTrainings }) {
+function TensorFlow({ gridSize, initialState, winState, obstacles, numTrainings }) {
 	const [isLearning, setIsLearning] = useState(false)
 	const [isStarted, setIsStarted] = useState(false)
 	const [preferredPath, setPreferredPath] = useState(null)
 	const [isCompletePath, setIsCompletePath] = useState(false)
-	const [localWinState, setLocalWinState] = useState<coordsType>({ row: gridSize - 1, col: gridSize - 1 })
-	const [localStartState, setLocalStartState] = useState<coordsType>({ row: 0, col: 0 })
+	const [localWinState, setLocalWinState] = useState<coordsType>(winState)
+	const [localStartState, setLocalStartState] = useState<coordsType>(initialState)
 	const [notes, setNotes] = useState(``)
 	const ai = useRef(new DQNAgent([0, 1, 2, 3], 2)) // Actions: up, down, left, right, stateSize: 2 (i.e. 2 states: flat grid. x,y coords))
 
@@ -273,8 +286,8 @@ function TensorFlow({ gridSize, obstacles, numTrainings }) {
 
 		// Train for n episodes
 		trainAgentBulk(numTrainings).then((data) => {
-			setLocalStartState(localStartState)
-			setLocalWinState(localWinState)
+			// setLocalStartState(localStartState)
+			// setLocalWinState(localWinState)
 
 			const { path, complete } = data
 
@@ -297,21 +310,25 @@ function TensorFlow({ gridSize, obstacles, numTrainings }) {
 		isCompletePath={isCompletePath}
 		startState={localStartState}
 		winState={localWinState}
+		loseState={{ row: 999, col: 999 } /* we ignore lose state on tensorflow example currently */}
 		notes={notes}/>
 }
 
 export function TensorFlowSimple() {
 	const gridSize = 5
-	const numTrainings = 100
-
+	const numTrainings = 10
+	const initialState = { row: 0, col: 0 }
+	const winState = { row: gridSize - 1, col: gridSize - 1 }
 	const obstacles = []
 
-	return <TensorFlow gridSize={gridSize} obstacles={obstacles} numTrainings={numTrainings}/>
+	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings}/>
 }
 
 export function TensorFlowObstacles() {
 	const gridSize = 5
-	const numTrainings = 100
+	const numTrainings = 10
+	const initialState = { row: 0, col: 0 }
+	const winState = { row: gridSize - 1, col: gridSize - 1 }
 	const obstacles = [
 		// { row: 0, col: 0 },
 		// { row: 1, col: 0 },
@@ -330,17 +347,21 @@ export function TensorFlowObstacles() {
 		{ row: 5, col: 5 },
 		// { row: 5, col: 6 },
 		{ row: 5, col: 7 },
-		{ row: 0, col: 4 },
+		// { row: 0, col: 4 },
+		{ row: 2, col: 3 },
+		{ row: 3, col: 2 },
 		// { row: 0, col: 6 },
 		// { row: 1, col: 6 },
 	]
 
-	return <TensorFlow gridSize={gridSize} obstacles={obstacles} numTrainings={numTrainings}/>
+	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings}/>
 }
 
 export function TensorFlowObstaclesMedium() {
 	const gridSize = 8
-	const numTrainings = 100
+	const numTrainings = 10
+	const initialState = { row: 0, col: 0 }
+	const winState = { row: gridSize - 1, col: gridSize - 1 }
 	const obstacles = [
 		// { row: 0, col: 0 },
 		// { row: 1, col: 0 },
@@ -349,12 +370,12 @@ export function TensorFlowObstaclesMedium() {
 		{ row: 4, col: 0 },
 		{ row: 5, col: 0 },
 		{ row: 6, col: 0 },
-		{ row: 1, col: 2 },
-		{ row: 2, col: 2 },
-		{ row: 3, col: 2 },
-		{ row: 4, col: 2 },
-		{ row: 5, col: 2 },
-		{ row: 5, col: 3 },
+		// { row: 1, col: 2 },
+		// { row: 2, col: 2 },
+		// { row: 3, col: 2 },
+		// { row: 4, col: 2 },
+		// { row: 5, col: 2 },
+		// { row: 5, col: 3 },
 		{ row: 5, col: 4 },
 		{ row: 5, col: 5 },
 		{ row: 5, col: 6 },
@@ -364,5 +385,5 @@ export function TensorFlowObstaclesMedium() {
 		{ row: 1, col: 6 },
 	]
 
-	return <TensorFlow gridSize={gridSize} obstacles={obstacles} numTrainings={numTrainings}/>
+	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings}/>
 }

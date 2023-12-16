@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import { gridSize, obstacles } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { coordsType, pathType, sleep } from "~/assets/components/MachineLearning/Bellman/functions"
 import { GridUi } from "~/assets/components/MachineLearning/components/GridUi"
+
+const gridSize = 5
+const loseState = { row: 99, col: 99 }
+const obstacles = []
 
 const inputSize = 2
 const hiddenSize = 3
@@ -187,6 +190,13 @@ class AI {
 	goalPosition: coordsType
 	movesOutputs: number[]
 
+	// epsilon-greedy properties
+	private epsilon: number = 0.95 /* 1.0 number between 0 and 1. 1 = random, 0 is explicit to algorithm.
+		we'll drop from 1 to 0.5 after 1st pass. Then gradually decay thereafter
+		maybe 0.3-0.4 is a good value */
+	private epsilonMin: number = 0.01
+	private epsilonDecay: number = 0.995
+
 	constructor(grid, neuralNetwork) {
 		this.grid = grid
 		this.neuralNetwork = neuralNetwork
@@ -221,7 +231,8 @@ class AI {
 		// this.movesOutputs.push(moveProbabilities)
 
 		// Determine the next move based on the output
-		if (Math.random() < 0.2) {
+		/** Uses epsilon-greedy exploration strategy */
+		if (Math.random() < this.epsilon) {
 			const possibleMoves = Object.keys(moveProbabilities)
 			const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]
 
@@ -231,6 +242,15 @@ class AI {
 				.reduce((a, b) => moveProbabilities[a] > moveProbabilities[b] ? a : b)
 
 			this.executeMove(nextMove)
+		}
+	}
+
+	/**
+	 * Decay the epsilon value so there is less randomness the longer it learns
+	 */
+	public updateEpsilon(): void {
+		if (this.epsilon > this.epsilonMin) {
+			this.epsilon *= this.epsilonDecay
 		}
 	}
 
@@ -381,5 +401,7 @@ export function NeuralNet() {
 		isCompletePath={isCompletePath}
 		startState={localStartState}
 		winState={localWinState}
+		loseState={loseState}
+		obstacles={obstacles}
 		notes={``}/>
 }

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react"
 import styles from "~/assets/components/MachineLearning/MachineLearning.module.css"
-import { loseState } from "~/assets/components/MachineLearning/Bellman/fixtures"
 import { sleep } from "~/assets/components/MachineLearning/Bellman/functions"
 import Button from "~/assets/components/Controls/Button"
 
-function DrawGrid({ gridSize, obstacles, isStarted, onFinish, preferredPath, startState, winState }) {
+function DrawGrid({ gridSize, obstacles, isStarted, onFinish, preferredPath, startState, winState, loseState }) {
 	const [aiLocation, setAiLocation] = useState(startState)
 	const grid = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, (e, i) => i))
 
@@ -61,12 +60,12 @@ function GridLegend({ isCompletePath, preferredPath, startState, winState, notes
 	</div>
 }
 
-export function GridUi({ gridSize, obstacles, preferredPath, isStarted, setIsStarted, isLearning, setIsLearning, isCompletePath, startState, winState, notes }) {
+export function GridUi({ gridSize, obstacles, preferredPath, isStarted, setIsStarted, isLearning, setIsLearning, isCompletePath, startState, winState, loseState, notes }) {
 	return <div>
 		{/* <div>{preferredPath && JSON.stringify(preferredPath)}</div> */}
 		<br/>
 		<div className={styles.flexGap}>
-			<DrawGrid gridSize={gridSize} obstacles={obstacles} isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} startState={startState} winState={winState} />
+			<DrawGrid gridSize={gridSize} obstacles={obstacles} isStarted={isStarted} onFinish={() => setIsStarted(false)} preferredPath={preferredPath} startState={startState} winState={winState} loseState={loseState} />
 			<div>
 				<div className={styles.flexGap} style={{ alignItems: `center` }}>
 					<Button label={isLearning ? `Training...` : `Start Learning`} onClick={() => setIsLearning(true)} disabled={isLearning}/>
