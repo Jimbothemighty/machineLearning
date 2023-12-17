@@ -12,8 +12,26 @@ if (!process.env.VITE) {
 	app.listen(process.env.PORT)
 }
 
-app.get(`/api/tensorflowbasic`, function(req, res) {
-	request(`http://127.0.0.1:5000/flask`, function(error, response, body) {
+app.get(`/api/tensorflow_simple`, function(req, res) {
+	request(`http://127.0.0.1:5000/tensorflow_simple`, function(error, response, body) {
+		console.error(`error:`, error) // Print the error
+		console.log(`statusCode:`, response && response.statusCode) // Print the response status code if a response was received
+		console.log(`body:`, body) // Print the data received
+		res.send(body) // Display the response on the website
+	})
+})
+
+app.get(`/api/tensorflow_simple_obstacles`, function(req, res) {
+	request(`http://127.0.0.1:5000/tensorflow_simple_obstacles`, function(error, response, body) {
+		console.error(`error:`, error) // Print the error
+		console.log(`statusCode:`, response && response.statusCode) // Print the response status code if a response was received
+		console.log(`body:`, body) // Print the data received
+		res.send(body) // Display the response on the website
+	})
+})
+
+app.get(`/api/tensorflow_medium_obstacles`, function(req, res) {
+	request(`http://127.0.0.1:5000/tensorflow_medium_obstacles`, function(error, response, body) {
 		console.error(`error:`, error) // Print the error
 		console.log(`statusCode:`, response && response.statusCode) // Print the response status code if a response was received
 		console.log(`body:`, body) // Print the data received

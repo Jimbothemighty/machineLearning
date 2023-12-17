@@ -255,17 +255,21 @@ async function trainAgent(agent : DQNAgent, gridSize : number, obstacles, episod
 	return stepsTaken
 }
 
-function TensorFlowApi({ gridSize, initialState, winState, obstacles, numTrainings, apiPath }) {
-	const [isLearning, setIsLearning] = useState(false)
-	const [isStarted, setIsStarted] = useState(false)
-	const [preferredPath, setPreferredPath] = useState(null)
-	const [isCompletePath, setIsCompletePath] = useState(false)
+function TensorFlow({ gridSize, initialState, winState, obstacles, numTrainings, apiPath = null }) {
+	const [isLearning, setIsLearning] = useState<boolean>(false)
+	const [isStarted, setIsStarted] = useState<boolean>(false)
+	const [preferredPath, setPreferredPath] = useState<pathType>(null)
+	const [isCompletePath, setIsCompletePath] = useState<boolean>(false)
 	const [localWinState, setLocalWinState] = useState<coordsType>(winState)
 	const [localStartState, setLocalStartState] = useState<coordsType>(initialState)
-	const [notes, setNotes] = useState(``)
+	const [notes, setNotes] = useState<string>(``)
 	const ai = useRef(new DQNAgent([0, 1, 2, 3], 2)) // Actions: up, down, left, right, stateSize: 2 (i.e. 2 states: flat grid. x,y coords))
 
 	useEffect(() => {
+		if (!isLearning) {
+			return
+		}
+
 		async function getData() {
 			let resp = await fetch(apiPath)
 			let respDataStr = await resp.text()
@@ -275,57 +279,6 @@ function TensorFlowApi({ gridSize, initialState, winState, obstacles, numTrainin
 			return respDataObj
 		}
 
-		if (!isLearning) {
-			return
-		}
-
-		setNotes(`Started training (python). Please wait...`)
-
-		getData().then((data) => {
-			setNotes(`Training finished (python)`)
-			// setLocalStartState(localStartState)
-			// setLocalWinState(localWinState)
-
-			const { path, complete } = data
-
-			setPreferredPath(path)
-			sleep(500).then(() => setIsLearning(false))
-			setIsCompletePath(complete)
-
-			console.log(ai.current.getAggregates())
-		})
-	}, [isLearning])
-
-	return <GridUi
-		gridSize={gridSize}
-		obstacles={obstacles}
-		preferredPath={preferredPath}
-		isStarted={isStarted}
-		setIsStarted={setIsStarted}
-		isLearning={isLearning}
-		setIsLearning={setIsLearning}
-		isCompletePath={isCompletePath}
-		startState={localStartState}
-		winState={localWinState}
-		loseState={{ row: 999, col: 999 } /* we ignore lose state on tensorflow example currently */}
-		notes={notes}/>
-}
-
-function TensorFlow({ gridSize, initialState, winState, obstacles, numTrainings }) {
-	const [isLearning, setIsLearning] = useState(false)
-	const [isStarted, setIsStarted] = useState(false)
-	const [preferredPath, setPreferredPath] = useState(null)
-	const [isCompletePath, setIsCompletePath] = useState(false)
-	const [localWinState, setLocalWinState] = useState<coordsType>(winState)
-	const [localStartState, setLocalStartState] = useState<coordsType>(initialState)
-	const [notes, setNotes] = useState(``)
-	const ai = useRef(new DQNAgent([0, 1, 2, 3], 2)) // Actions: up, down, left, right, stateSize: 2 (i.e. 2 states: flat grid. x,y coords))
-
-	useEffect(() => {
-		if (!isLearning) {
-			return
-		}
-
 		async function trainAgentBulk(numTrainings) : Promise<pathType> {
 			let data
 			const arr = Array.from({ length: numTrainings }, (value, index) => index)
@@ -333,9 +286,17 @@ function TensorFlow({ gridSize, initialState, winState, obstacles, numTrainings 
 			setNotes(`Started training`)
 
 			for (const iterator of arr) {
-				data = await trainAgent(ai.current, gridSize, obstacles, 1)
+				if (apiPath !== null) {
+					data = await getData()
+					const { path } = data
+					setPreferredPath(path)
+				} else {
+					data = await trainAgent(ai.current, gridSize, obstacles, 1)
+				}
+
 				setNotes(`Completed training ${iterator + 1}/${numTrainings}`)
 			}
+
 			setNotes(`Training finished`)
 			return data
 		}
@@ -372,13 +333,47 @@ function TensorFlow({ gridSize, initialState, winState, obstacles, numTrainings 
 
 export function TensorFlowSimpleApi() {
 	const gridSize = 5
-	const numTrainings = 10
+	const numTrainings = 1
 	const initialState = { row: 0, col: 0 }
 	const winState = { row: gridSize - 1, col: gridSize - 1 }
 	const obstacles = []
-	const apiPath = `/api/tensorflowbasic`
+	const apiPath = `/api/tensorflow_simple`
 
-	return <TensorFlowApi gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings} apiPath={apiPath}/>
+	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings} apiPath={apiPath}/>
+}
+
+export function TensorFlowSimpleObstaclesApi() {
+	const gridSize = 5
+	const numTrainings = 1
+	const initialState = { row: 0, col: 0 }
+	const winState = { row: gridSize - 1, col: gridSize - 1 }
+	const obstacles = [
+		// { row: 0, col: 0 },
+		// { row: 1, col: 0 },
+		// { row: 2, col: 0 },
+		{ row: 3, col: 0 },
+		{ row: 4, col: 0 },
+		{ row: 5, col: 0 },
+		{ row: 6, col: 0 },
+		// { row: 1, col: 2 },
+		// { row: 2, col: 2 },
+		// { row: 3, col: 2 },
+		// { row: 4, col: 2 },
+		{ row: 5, col: 2 },
+		{ row: 5, col: 3 },
+		{ row: 5, col: 4 },
+		{ row: 5, col: 5 },
+		// { row: 5, col: 6 },
+		{ row: 5, col: 7 },
+		// { row: 0, col: 4 },
+		{ row: 2, col: 3 },
+		{ row: 3, col: 2 },
+		// { row: 0, col: 6 },
+		// { row: 1, col: 6 },
+	]
+	const apiPath = `/api/tensorflow_simple_obstacles`
+
+	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings} apiPath={apiPath}/>
 }
 
 export function TensorFlowSimple() {
@@ -424,9 +419,9 @@ export function TensorFlowObstacles() {
 	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings}/>
 }
 
-export function TensorFlowObstaclesMedium() {
+export function TensorFlowObstaclesMediumApi() {
 	const gridSize = 8
-	const numTrainings = 10
+	const numTrainings = 1
 	const initialState = { row: 0, col: 0 }
 	const winState = { row: gridSize - 1, col: gridSize - 1 }
 	const obstacles = [
@@ -451,6 +446,7 @@ export function TensorFlowObstaclesMedium() {
 		{ row: 0, col: 6 },
 		{ row: 1, col: 6 },
 	]
+	const apiPath = `/api/tensorflow_medium_obstacles`
 
-	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings}/>
+	return <TensorFlow gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings} apiPath={apiPath}/>
 }

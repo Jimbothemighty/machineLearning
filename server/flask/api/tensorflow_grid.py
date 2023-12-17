@@ -13,7 +13,7 @@ class DQNAgent:
 
         # Epsilon-greedy strategy parameters
         self.epsilon = 0.95
-        self.epsilon_min = 0.01
+        self.epsilon_min = 0.005
         self.epsilon_decay = 0.998
 
         # Training data tracking
@@ -123,17 +123,21 @@ class GridEnvironment:
         done = False
 
         if self.agent_position['x'] == self.grid_size - 1 and self.agent_position['y'] == self.grid_size - 1:
-            reward = 1
+            reward = 2
             done = True
         elif any(obstacle['row'] == self.agent_position['x'] and obstacle['col'] == self.agent_position['y'] for obstacle in self.obstacles):
-            reward = self.get_obstacle_cost()
+            print(f"HIT OSTACLE. [{self.agent_position['x']}, {self.agent_position['y']}]")
+            reward = self.get_obstacle_cost(1)
+        elif any((obstacle['row'] == self.agent_position['x']+1 or obstacle['row'] == self.agent_position['x']-1) and (obstacle['col'] == self.agent_position['y']+1 or obstacle['col'] == self.agent_position['y']-1) for obstacle in self.obstacles):
+            print(f"NEAR OSTACLE. [{self.agent_position['x']}, {self.agent_position['y']}]")
+            reward = self.get_obstacle_cost(1.5)
         else:
             reward = self.get_distance_living_cost()
 
         return {'state': self.get_state(), 'reward': reward, 'done': done}
 
-    def get_obstacle_cost(self):
-        return self.get_distance_living_cost() * 2
+    def get_obstacle_cost(self, divideBy):
+        return self.get_distance_living_cost() * 2 / divideBy
 
     def get_distance_living_cost(self):
         max_distance = self.grid_size - 1
@@ -179,12 +183,11 @@ def train_agent(agent, grid_size, obstacles, episodes, model_path, epsilon_path)
             if not is_valid_move:
                 continue
 
+            if original_state == next_state:
+                print(f"{original_state} {next_state}")
+                # continue
+
             agent.train(original_state, action, reward, next_state, is_done)
-
-            agent.update_epsilon()
-
-            agent.save_model(model_path)
-            agent.save_epsilon(epsilon_path)
 
             state = next_state
             done = is_done
@@ -196,10 +199,14 @@ def train_agent(agent, grid_size, obstacles, episodes, model_path, epsilon_path)
             })
 
             # print(json.dumps(next_state))
+            agent.update_epsilon()
 
             if done:
                 steps_taken['complete'] = True
                 agent.update_aggregate_data(len(steps_taken['path']))
+
+            agent.save_model(model_path)
+            agent.save_epsilon(epsilon_path)
 
             iteration += 1
 
@@ -207,13 +214,11 @@ def train_agent(agent, grid_size, obstacles, episodes, model_path, epsilon_path)
 
     return steps_taken
 
-def api_run():
+def api_run(path, grid_size, obstacles):
+    model_path = path + 'model.keras'
+    epsilon_path = path + 'epsilon.json'
     agent = DQNAgent([0, 1, 2, 3], 2)
-    grid_size = 5
-    obstacles = []
-    num_trainings = 10
-    model_path = 'tensorflow_simple_model.keras'
-    epsilon_path = 'epsilon.json'
+    num_trainings = 1
 
     tf.get_logger().setLevel('ERROR') # WARNING
     # print(tf.__version__)

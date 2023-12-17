@@ -3,7 +3,7 @@ import { Tab, Tabs } from "~/assets/components/Tabs"
 import { Bellman } from "~/assets/components/MachineLearning/Bellman"
 import { NeuralNet } from "~/assets/components/MachineLearning/NeuralNetwork"
 import "~/assets/css/style.css"
-import { TensorFlowSimple, TensorFlowObstacles, TensorFlowObstaclesMedium, TensorFlowSimpleApi } from "~/assets/components/MachineLearning/TensorFlow/"
+import { TensorFlowSimple, TensorFlowObstacles, TensorFlowObstaclesMediumApi, TensorFlowSimpleApi, TensorFlowSimpleObstaclesApi } from "~/assets/components/MachineLearning/TensorFlow/"
 
 export function App() {
 	return <div className="App">
@@ -13,14 +13,17 @@ export function App() {
 				<Tab label="TensorFlow Simple API">
 					<TensorFlowSimpleApi/>
 				</Tab>
+				<Tab label="TensorFlow Simple Obstacles API">
+					<TensorFlowSimpleObstaclesApi/>
+				</Tab>
+				<Tab label="TensorFlow Obstacles Medium API">
+					<TensorFlowObstaclesMediumApi/>
+				</Tab>
 				<Tab label="TensorFlow Simple">
 					<TensorFlowSimple/>
 				</Tab>
 				<Tab label="TensorFlow Obstacles">
 					<TensorFlowObstacles/>
-				</Tab>
-				<Tab label="TensorFlow Obstacles Medium">
-					<TensorFlowObstaclesMedium/>
 				</Tab>
 				<Tab label="Neural Network">
 					<NeuralNet/>
