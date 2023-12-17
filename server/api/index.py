@@ -1,10 +1,11 @@
 import json
 import numpy as np
 import tensorflow as tf
+import time
 
 class DQNAgent:
     def __init__(self, actions, state_size, learning_rate=0.01, discount_factor=0.95):
-        self.actions = actions  # List of possible actions
+        self.actions = actions
         self.state_size = state_size
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
@@ -13,7 +14,7 @@ class DQNAgent:
         # Epsilon-greedy strategy parameters
         self.epsilon = 0.95
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.998
 
         # Training data tracking
         self.times_trained = 0
@@ -21,11 +22,32 @@ class DQNAgent:
         self.this_batch = []
         self.av_steps_per_training_batch = []
 
+    def save_model(self, file_path):
+        self.model.save(file_path)
+
+    def load_model(self, file_path):
+        self.model = tf.keras.models.load_model(file_path)
+
+    def save_epsilon(self, file_path):
+        epsilon_data = {
+            'epsilon': self.epsilon,
+            'times_trained': self.times_trained
+        }
+        with open(file_path, 'w') as file:
+            json.dump(epsilon_data, file)
+
+    def load_epsilon(self, file_path):
+        with open(file_path, 'r') as file:
+            epsilon_data = json.load(file)
+            self.epsilon = epsilon_data['epsilon']
+            self.times_trained = epsilon_data['times_trained']
+
     def create_model(self):
-        model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Dense(24, input_shape=(self.state_size,), activation='relu'))
-        model.add(tf.keras.layers.Dense(24, activation='relu'))
-        model.add(tf.keras.layers.Dense(len(self.actions), activation='linear'))
+        model = tf.keras.Sequential([
+            tf.keras.layers.Dense(24, input_shape=(self.state_size,), activation='relu'),
+            tf.keras.layers.Dense(24, activation='relu'),
+            tf.keras.layers.Dense(len(self.actions), activation='linear')
+        ])
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
                       loss='mean_squared_error')
         return model
@@ -47,15 +69,15 @@ class DQNAgent:
         next_state_tensor = tf.convert_to_tensor([next_state], dtype=tf.float32)
 
         with tf.GradientTape() as tape:
-            current_q = self.model(state_tensor, training=True)
-            next_q = self.model(next_state_tensor, training=True)
-            updated_q = current_q.numpy()
-            max_next_q = np.max(next_q.numpy(), axis=1)
+            current_q_values = self.model(state_tensor, training=True)
+            next_q_values = self.model(next_state_tensor, training=True)
+            updated_q_values = current_q_values.numpy()
+            max_next_q = np.max(next_q_values.numpy(), axis=1)
 
-            updated_q[0, action_index] = reward if done else reward + self.discount_factor * max_next_q
+            updated_q_values[0, action_index] = reward if done else reward + self.discount_factor * max_next_q
 
             # Compute loss
-            loss = tf.keras.losses.mean_squared_error(current_q, updated_q)
+            loss = tf.keras.losses.mean_squared_error(current_q_values, updated_q_values)
 
         # Perform gradient update
         grads = tape.gradient(loss, self.model.trainable_variables)
@@ -120,7 +142,15 @@ class GridEnvironment:
     def get_state(self):
         return [self.agent_position['x'], self.agent_position['y']]
 
-def train_agent(agent, grid_size, obstacles, episodes):
+def train_agent(agent, grid_size, obstacles, episodes, model_path, epsilon_path):
+    try:
+        agent.load_model(model_path)
+        agent.load_epsilon(epsilon_path)
+        print("Model loaded successfully.")
+    except (ImportError, ValueError, IOError):
+        print("No existing model found. Starting fresh training.")
+
+
     env = GridEnvironment(grid_size, obstacles)
     steps_taken = None
 
@@ -153,6 +183,9 @@ def train_agent(agent, grid_size, obstacles, episodes):
 
             agent.update_epsilon()
 
+            agent.save_model(model_path)
+            agent.save_epsilon(epsilon_path)
+
             state = next_state
             done = is_done
             total_reward += reward
@@ -161,6 +194,8 @@ def train_agent(agent, grid_size, obstacles, episodes):
                 'row': next_state[0],
                 'col': next_state[1],
             })
+
+            # print(json.dumps(next_state))
 
             if done:
                 steps_taken['complete'] = True
@@ -176,9 +211,18 @@ agent = DQNAgent([0, 1, 2, 3], 2)
 grid_size = 5
 obstacles = []
 num_trainings = 10
+model_path = 'tensorflow_simple_model.keras'
+epsilon_path = 'epsilon.json'
 
+tf.get_logger().setLevel('ERROR') # WARNING
 print(tf.__version__)
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-# path_data = train_agent(agent, grid_size, obstacles, num_trainings)
 
-# print(json.dumps(path_data))
+start_time = time.time()
+
+path_data = train_agent(agent, grid_size, obstacles, num_trainings, model_path, epsilon_path)
+
+print("--- %s seconds ---" % (time.time() - start_time))
+
+print(json.dumps(path_data))
