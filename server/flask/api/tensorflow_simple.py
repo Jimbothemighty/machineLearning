@@ -207,22 +207,24 @@ def train_agent(agent, grid_size, obstacles, episodes, model_path, epsilon_path)
 
     return steps_taken
 
-agent = DQNAgent([0, 1, 2, 3], 2)
-grid_size = 5
-obstacles = []
-num_trainings = 10
-model_path = 'tensorflow_simple_model.keras'
-epsilon_path = 'epsilon.json'
+def api_run():
+    agent = DQNAgent([0, 1, 2, 3], 2)
+    grid_size = 5
+    obstacles = []
+    num_trainings = 10
+    model_path = 'tensorflow_simple_model.keras'
+    epsilon_path = 'epsilon.json'
 
-tf.get_logger().setLevel('ERROR') # WARNING
-print(tf.__version__)
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+    tf.get_logger().setLevel('ERROR') # WARNING
+    # print(tf.__version__)
+    # print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 
-start_time = time.time()
+    start_time = time.time()
 
-path_data = train_agent(agent, grid_size, obstacles, num_trainings, model_path, epsilon_path)
+    path_data = train_agent(agent, grid_size, obstacles, num_trainings, model_path, epsilon_path)
 
-print("--- %s seconds ---" % (time.time() - start_time))
+    # print("--- %s seconds ---" % (time.time() - start_time))
 
-print(json.dumps(path_data))
+    return (json.dumps(path_data))
+

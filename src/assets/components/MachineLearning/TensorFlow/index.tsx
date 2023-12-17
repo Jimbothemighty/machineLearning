@@ -255,6 +255,62 @@ async function trainAgent(agent : DQNAgent, gridSize : number, obstacles, episod
 	return stepsTaken
 }
 
+function TensorFlowApi({ gridSize, initialState, winState, obstacles, numTrainings, apiPath }) {
+	const [isLearning, setIsLearning] = useState(false)
+	const [isStarted, setIsStarted] = useState(false)
+	const [preferredPath, setPreferredPath] = useState(null)
+	const [isCompletePath, setIsCompletePath] = useState(false)
+	const [localWinState, setLocalWinState] = useState<coordsType>(winState)
+	const [localStartState, setLocalStartState] = useState<coordsType>(initialState)
+	const [notes, setNotes] = useState(``)
+	const ai = useRef(new DQNAgent([0, 1, 2, 3], 2)) // Actions: up, down, left, right, stateSize: 2 (i.e. 2 states: flat grid. x,y coords))
+
+	useEffect(() => {
+		async function getData() {
+			let resp = await fetch(apiPath)
+			let respDataStr = await resp.text()
+			console.log(respDataStr)
+			let respDataObj = JSON.parse(respDataStr)
+
+			return respDataObj
+		}
+
+		if (!isLearning) {
+			return
+		}
+
+		setNotes(`Started training (python). Please wait...`)
+
+		getData().then((data) => {
+			setNotes(`Training finished (python)`)
+			// setLocalStartState(localStartState)
+			// setLocalWinState(localWinState)
+
+			const { path, complete } = data
+
+			setPreferredPath(path)
+			sleep(500).then(() => setIsLearning(false))
+			setIsCompletePath(complete)
+
+			console.log(ai.current.getAggregates())
+		})
+	}, [isLearning])
+
+	return <GridUi
+		gridSize={gridSize}
+		obstacles={obstacles}
+		preferredPath={preferredPath}
+		isStarted={isStarted}
+		setIsStarted={setIsStarted}
+		isLearning={isLearning}
+		setIsLearning={setIsLearning}
+		isCompletePath={isCompletePath}
+		startState={localStartState}
+		winState={localWinState}
+		loseState={{ row: 999, col: 999 } /* we ignore lose state on tensorflow example currently */}
+		notes={notes}/>
+}
+
 function TensorFlow({ gridSize, initialState, winState, obstacles, numTrainings }) {
 	const [isLearning, setIsLearning] = useState(false)
 	const [isStarted, setIsStarted] = useState(false)
@@ -312,6 +368,17 @@ function TensorFlow({ gridSize, initialState, winState, obstacles, numTrainings 
 		winState={localWinState}
 		loseState={{ row: 999, col: 999 } /* we ignore lose state on tensorflow example currently */}
 		notes={notes}/>
+}
+
+export function TensorFlowSimpleApi() {
+	const gridSize = 5
+	const numTrainings = 10
+	const initialState = { row: 0, col: 0 }
+	const winState = { row: gridSize - 1, col: gridSize - 1 }
+	const obstacles = []
+	const apiPath = `/api/tensorflowbasic`
+
+	return <TensorFlowApi gridSize={gridSize} initialState={initialState} winState={winState} obstacles={obstacles} numTrainings={numTrainings} apiPath={apiPath}/>
 }
 
 export function TensorFlowSimple() {
